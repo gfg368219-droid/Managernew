@@ -36,6 +36,7 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
         let user = message.guild.members.cache.get(args[0]) || message.mentions.members.first();
+        if (!user) return message.reply("Veuillez mentionner un membre ou fournir son identifiant Discord.");
         let time = ms("0.1s")
 
         
