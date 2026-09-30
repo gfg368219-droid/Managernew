@@ -10,6 +10,7 @@ module.exports = {
      * @param {Discord.Message} message 
      */
     run: async (client, message) => {
+        let commandName = "<non reconnue>"
         try {
             if (!message) return 
             if (!message.guild || !message.author) return
@@ -35,13 +36,16 @@ module.exports = {
 
             if (!commandText) return
             const args = commandText.trim().split(/\s+/g)
-            const commandName = args[0].toLowerCase().normalize()
+            commandName = args[0].toLowerCase().normalize()
             const cmd = client.commands.get(commandName) || client.aliases.get(commandName)
             args.shift()
             if (!cmd) return
             await cmd.run(client, message, args, color, prefix, footer, commandName)
         } catch (err) {
-            console.log("messageCreate error : " + err)
+            console.error(
+                `[gestion] erreur dans la commande "${commandName}" (serveur ${message?.guildId || "inconnu"}) :`,
+                err
+            )
         }
     }
 }
