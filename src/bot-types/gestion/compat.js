@@ -51,9 +51,11 @@ class MessageEmbed extends EmbedBuilder {
   setFooter() {
     const [textOrOptions, iconURL] = arguments;
     if (typeof textOrOptions === "string") {
+      if (textOrOptions.length === 0) return this;
       return super.setFooter({ text: textOrOptions, iconURL });
     }
     if (textOrOptions && typeof textOrOptions === "object") {
+      if (textOrOptions.text === "") return this;
       return super.setFooter(textOrOptions);
     }
     return this;
