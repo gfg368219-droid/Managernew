@@ -19,17 +19,14 @@ module.exports = {
 
         if(!client.config.buyers.includes(message.author.id)) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-    if (message.mentions.members.size > 0 || client.users.cache.get(args[0])) {
+    const member = message.mentions.members.first() ||
+        (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
+    if (!member) return message.reply("Veuillez mentionner un membre ou fournir son identifiant.");
 
-        let member = message.mentions.members.first()
-
-        if (client.db.get(`owner_${member.id}`) === true) return message.channel.send(`${member.user.username} est déjà owner`)
-        client.db.push(`${client.user.id}.owner`, member.id)
-        client.db.set(`owner_${member.id}`, true)
-        message.channel.send(`${member.user.username} est désormais owner`)
-
-    }
-
+    if (client.db.get(`owner_${member.id}`) === true) return message.channel.send(`${member.user.username} est déjà owner`)
+    client.db.push(`${client.user.id}.owner`, member.id)
+    client.db.set(`owner_${member.id}`, true)
+    message.channel.send(`${member.user.username} est désormais owner`)
 
     }
 }

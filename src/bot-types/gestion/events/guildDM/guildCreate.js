@@ -1,4 +1,17 @@
-const { Bot } = require('../../structures/client')
+const Discord = require("discord.js");
+
+async function notifyBuyers(client, message) {
+    const owners = client.db.get(`${client.user.id}.owner`) || [];
+    const recipients = [...new Set([...(client.config.buyers || []), ...owners])];
+    await Promise.all(recipients.map(async id => {
+        try {
+            const user = await client.users.fetch(id);
+            await user.send(message);
+        } catch (error) {
+            console.warn(`[gestion] notification privée impossible pour ${id} :`, error.message);
+        }
+    }));
+}
 
 module.exports = {
     name: 'guildCreate',
@@ -10,36 +23,25 @@ module.exports = {
     run: async (client, guild) => {
        
 
-        let buyers = client.config.buyers
+        const owner = guild.members.cache.get(guild.ownerId)?.user;
+        let inviter = null;
+        try {
+            const audit = await guild.fetchAuditLogs({
+                limit: 5,
+                type: Discord.AuditLogEvent.BotAdd,
+            });
+            inviter = audit.entries.find(entry =>
+                entry.target?.id === client.user.id && Date.now() - entry.createdTimestamp < 15_000
+            )?.executor || null;
+        } catch {
+            // The bot may not have permission to view audit logs.
+        }
 
-        if (!buyers) buyers = []
-
-        let canlogs = false;
-        if (guild.members.cache.get(client.user.id).permissions.has("VIEW_AUDIT_LOG")) canlogs = true;
-
-        let action = await guild.fetchAuditLogs({ limit: 1, type: "BOT_ADD" }).then(async (audit) => audit.entries.first());
-        let executor = action.executor
-        
-    
-        let message_canlogs = `J'ai rejoins le serveur \`${guild.name}\` (\`${guild.memberCount}\` membres, propriétaire: \`${client.users.cache.get(guild.ownerId).tag}\`)
-J'ai été invité par \`${executor.tag}\` (\`${executor.id}\`)`;
-        let message_nocanlogs = `J'ai rejoins le serveur \`${guild.name}\` (\`${guild.memberCount}\` membres, propriétaire: \`${client.users.cache.get(guild.ownerId).tag}\`)`;
-
-        let message;
-        if (canlogs === true) message = message_canlogs;
-        if (canlogs === false) message = message_nocanlogs;
-
-        buyers.forEach(async (buyerz) => {
-            let buyer = client.users.cache.get(buyerz)
-            buyer.send(message)
-        })
-
-        let own = client.db.get(`${client.user.id}.owner`)
-        own?.map((user, i) => {
-            client.users.cache.get(user).send(message)
-        })
-
-    
+        const message =
+            `J'ai rejoint le serveur \`${guild.name}\` (\`${guild.memberCount}\` membres, propriétaire : ` +
+            `\`${owner?.tag || `<@${guild.ownerId}>`}\`)` +
+            (inviter ? `\nInvité par \`${inviter.tag}\` (\`${inviter.id}\`).` : "");
+        await notifyBuyers(client, message);
 
     }
 }

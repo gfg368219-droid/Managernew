@@ -35,6 +35,8 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
+if (!args[0]) return message.channel.send(`Utilisation : \`${prefix}lockurl <vanity|on|off|max>\``)
+
 if(message.guild.premiumTier !== "TIER_3"){
     return message.channel.send(`Ce serveur ne possède pas le niveau 3.`)
 }
@@ -63,7 +65,7 @@ if (args[0] === "on") {
     client.db.set(`lockurl.${message.guild.id}`, "on")
     message.channel.send(`Le lock url a été activé.`)
 } else if (args[0] === "off") {
-    client.db.set(`lockurl.${message.guild.id}`)
+    client.db.delete(`lockurl.${message.guild.id}`)
     message.channel.send(`Le lock url a été désactivé.`)
 } else if (args[0] === "max") {
     client.db.set(`lockurl.${message.guild.id}`, "max")

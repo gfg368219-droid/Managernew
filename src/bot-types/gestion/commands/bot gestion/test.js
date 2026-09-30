@@ -2,11 +2,11 @@ const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
 
 module.exports = {
-    name: "allo",
-    aliases: [],
-    description: "À l'huile",
+    name: "test",
+    aliases: ["allo"],
+    description: "Vérifie que le bot répond correctement",
     category: "botcontrol",
-    usage: ["allo"],
+    usage: ["test"],
 
     /**
      * @param {bot} client 
@@ -31,7 +31,10 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-    message.channel.send(`À l'huile`)    
+    const latency = Math.max(0, Date.now() - message.createdTimestamp);
+    message.channel.send(
+        `Le bot fonctionne.\nLatence : \`${latency} ms\` · Passerelle : \`${client.ws.ping} ms\` · Commandes chargées : \`${client.commands.size}\``
+    );
 
     }
 }

@@ -1,8 +1,5 @@
 const { Bot } = require('../../structures/client')
 const Discord = require('discord.js')
-const fs = require('fs')
-const { exec } = require('child_process')
-const wait = ms => new Promise(resolve => {setTimeout(resolve, ms)})
 
 module.exports = {
     name: 'channelDelete',
@@ -18,7 +15,11 @@ module.exports = {
         if(!antichannel) return;
         
 
-        let action = await guild.fetchAuditLogs({ limit: 1, type: "CHANNEL_DELETE" }).then(async (audit) => audit.entries.first());
+        let action = await guild.fetchAuditLogs({ limit: 5, type: Discord.AuditLogEvent.ChannelDelete })
+            .then(audit => audit.entries.find(entry =>
+                entry.target?.id === channel.id && Date.now() - entry.createdTimestamp < 10_000
+            ));
+        if (!action?.executor) return;
         let executor = action.executor
         let sanction = await client.db.get(`sanction.antichannel.${guild.id}`)
         if (executor.id === client.user.id) return;
@@ -29,55 +30,43 @@ module.exports = {
 
         if (perm) return;
 
-        let member = guild.members.cache.get(`${action.executor.id}`)
+        const member = await guild.members.fetch(executor.id).catch(() => null);
 
-  try {
-channel.clone({
-    name: channel.name,
-    permissions: channel.permissionsOverwrites,
-    type: channel.type,
-   //  parent: channel.parent,
-    topic: channel.withTopic,
-    nsfw: channel.nsfw,
-    birate: channel.bitrate,
-    userLimit: channel.userLimit,
-    rateLimitPerUser: channel.rateLimitPerUser,
-    permissions: channel.withPermissions,
-    position: channel.rawPosition,
-    reason: `Antichannel`
-})
-
-
-} catch (error) {
-channel.clone({
-    name: channel.name,
-    permissions: channel.permissionsOverwrites,
-    type: channel.type,
-   //  parent: channel.parent,
-    topic: channel.withTopic,
-    nsfw: channel.nsfw,
-    birate: channel.bitrate,
-    userLimit: channel.userLimit,
-    rateLimitPerUser: channel.rateLimitPerUser,
-    permissions: channel.withPermissions,
-    position: channel.rawPosition,
-    reason: `Antichannel`
-})
-    return;
-}
+        const options = {
+            name: channel.name,
+            type: channel.type,
+            parent: channel.parentId || undefined,
+            permissionOverwrites: [...channel.permissionOverwrites.cache.values()].map(overwrite => ({
+                id: overwrite.id,
+                type: overwrite.type,
+                allow: overwrite.allow.bitfield,
+                deny: overwrite.deny.bitfield,
+            })),
+            position: channel.rawPosition,
+            reason: "Antichannel - restauration du salon supprimé",
+        };
+        if (typeof channel.topic === "string") options.topic = channel.topic;
+        if (typeof channel.nsfw === "boolean") options.nsfw = channel.nsfw;
+        if (typeof channel.rateLimitPerUser === "number") options.rateLimitPerUser = channel.rateLimitPerUser;
+        if (typeof channel.bitrate === "number") options.bitrate = channel.bitrate;
+        if (typeof channel.userLimit === "number") options.userLimit = channel.userLimit;
+        try {
+            await channel.clone(options);
+        } catch (error) {
+            console.error(`[gestion] restauration du salon ${channel.id} impossible :`, error);
+        }
 
 
-        if (!sanction || sanction === "derank") {
-            member.roles.cache.forEach(async (m) => {
-                member.roles?.remove(m, "Antichannel")
-            })
-            if (action.executor.bot) {
-                await member.roles.botRole.setPermissions([], `Antichannel`)
+        if (member && (!sanction || sanction === "derank")) {
+            if (executor.bot) {
+                await member.roles.botRole?.setPermissions([], "Antichannel").catch(() => null);
+            } else {
+                await member.roles.set([], "Antichannel");
             }
-        } else if (sanction === "kick") {
-            member.kick("Antichannel")
-        } else if (sanction === "ban") {
-            member.ban("Antichannel")
+        } else if (member && sanction === "kick") {
+            await member.kick("Antichannel");
+        } else if (member && sanction === "ban") {
+            await member.ban({ reason: "Antichannel" });
         }
 
 

@@ -14,12 +14,24 @@ module.exports = {
     let guild = member.guild
     if (!guild) return;
 
-    let joinmessage = client.db.get(`joinmessage_${guild.id}`).replace("{user.username}", member.user.username).replace("{user.username}", member.user.username).replace("{user.username}", member.user.username).replace("{user.username}", member.user.username).replace("{user.tag}", member.user.tag).replace("{user.tag}", member.user.tag).replace("{user.tag}", member.user.tag).replace("{user.tag}", member.user.tag).replace("{user.id}", member.user.id).replace("{user.id}", member.user.id).replace("{user.id}", member.user.id).replace("{user.id}", member.user.id).replace("{user.mention}", member.user).replace("{user.mention}", member.user).replace("{user.mention}", member.user).replace("{user.mention}", member.user).replace("{guild.name}", member.guild.name).replace("{guild.name}", member.guild.name).replace("{guild.name}", member.guild.name).replace("{guild.name}", member.guild.name).replace("{guild.memberCount}", member.guild.memberCount).replace("{guild.memberCount}", member.guild.memberCount).replace("{guild.memberCount}", member.guild.memberCount).replace("{guild.memberCount}", member.guild.memberCount).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.usesCount}", member.guild.vanityURLUses || 0).replace("{vanity.Url}", member.guild.vanityURLCode || "none").replace("{vanity.Url}", member.guild.vanityURLCode || "none").replace("{vanity.Url}", member.guild.vanityURLCode || "none").replace("{vanity.Url}", member.guild.vanityURLCode || "none").replace("{vanity.Url}", member.guild.vanityURLCode || "none").replace("{vanity.Url}", member.guild.vanityURLCode || "none")
-    let joinchannel = guild.channels.cache.get(client.db.get(`joinchannel_${guild.id}`))
-    if (!joinmessage) return;
-    if (!joinchannel) return
+    const template = client.db.get(`joinmessage_${guild.id}`);
+    const joinChannelId = client.db.get(`joinchannel_${guild.id}`);
+    if (typeof template !== "string" || !template.trim() || !joinChannelId) return;
+    const joinChannel = guild.channels.cache.get(joinChannelId);
+    if (!joinChannel?.isTextBased()) return;
 
-    joinchannel.send(`${joinmessage}`)
+    const joinmessage = template
+        .replaceAll("{user.username}", member.user.username)
+        .replaceAll("{user.tag}", member.user.tag)
+        .replaceAll("{user.id}", member.user.id)
+        .replaceAll("{user.mention}", member.user.toString())
+        .replaceAll("{guild.name}", guild.name)
+        .replaceAll("{guild.memberCount}", String(guild.memberCount))
+        .replaceAll("{vanity.usesCount}", String(guild.vanityURLUses || 0))
+        .replaceAll("{vanity.Url}", guild.vanityURLCode || "none");
+    await joinChannel.send(joinmessage).catch(error => {
+        console.error(`[gestion] impossible d'envoyer le message de bienvenue (${guild.id}) :`, error.message);
+    });
  
     }
 }

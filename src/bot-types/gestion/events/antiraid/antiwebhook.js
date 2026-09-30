@@ -1,5 +1,4 @@
 const { Bot } = require('../../structures/client')
-const fetch = require('node-fetch')
 const Discord = require('discord.js')
 
 
@@ -22,7 +21,13 @@ module.exports = {
     
 
 
-    let action = await guild.fetchAuditLogs({ limit: 1, type: "WEBHOOK_CREATE" }).then(async (audit) => audit.entries.first());
+    let action = await guild.fetchAuditLogs({ limit: 5, type: Discord.AuditLogEvent.WebhookCreate })
+        .then(audit => audit.entries.find(entry =>
+            entry.target?.id &&
+            (entry.extra?.channel?.id === channel.id || entry.target?.channelId === channel.id) &&
+            Date.now() - entry.createdTimestamp < 10_000
+        ));
+    if (!action?.executor) return;
     let executor = action.executor
     let sanction = await client.db.get(`sanction.antiwebhook.${guild.id}`)
     if (executor.id === client.user.id) return;
@@ -33,36 +38,20 @@ module.exports = {
 
     if (perm) return;
 
-    if (modeaction === "delete") {
-      const hooks = guild.fetchWebhooks().then(webhooks => {
-        webhooks.forEach(webhook => {
-            webhook.delete()
-        })
-    })
-    } else if (modeaction === "renew") {
-        await channel.clone({
-                name: channel.name,
-                permissions: channel.permissionsOverwrites,
-                type: channel.type,
-                topic: channel.withTopic,
-                nsfw: channel.nsfw,
-                birate: channel.bitrate,
-                userLimit: channel.userLimit,
-                rateLimitPerUser: channel.rateLimitPerUser,
-                permissions: channel.withPermissions,
-                position: channel.rawPosition,
-                reason:  `Antiwebhook - renew`
-            }).then(x => {
-                channel.delete({reason:  `Antiwebhook - renew`})
-            })
+    const webhookId = action.target?.id;
+    const webhooks = await guild.fetchWebhooks();
+    const webhook = webhookId ? webhooks.get(webhookId) : null;
+    if (webhook && webhook.channelId === channel.id) {
+        await webhook.delete(`Antiwebhook - ${modeaction || "delete"}`);
     }
 
-    if (!sanction || sanction === "derank") {
-        guild.members.cache.get(executor.id).roles.set([])
-    } else if (sanction === "kick") {
-        guild.members.cache.get(executor.id).kick({ reason: "antiwebhook" })
-    } else if (sanction === "ban") {
-        guild.members.cache.get(executor.id).ban({ reason: "antiwebhook" })
+    const member = await guild.members.fetch(executor.id).catch(() => null);
+    if (member && (!sanction || sanction === "derank")) {
+        await member.roles.set([], "Antiwebhook");
+    } else if (member && sanction === "kick") {
+        await member.kick({ reason: "antiwebhook" });
+    } else if (member && sanction === "ban") {
+        await member.ban({ reason: "antiwebhook" });
     }
 
     let logsEmbed = new Discord.MessageEmbed()

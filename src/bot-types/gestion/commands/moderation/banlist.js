@@ -29,13 +29,14 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-    let banlist = await (await message.guild.bans.fetch()).map(u => `${u.user.tag} : \`${u.reason || 'Aucune raison'}\``).join('\n');
-    if (banlist.length < 0) return message.channel.send(`Aucun utilisateur banni.`);
+    const bans = await message.guild.bans.fetch();
+    if (bans.size === 0) return message.channel.send(`Aucun utilisateur banni.`);
+    const banlist = bans.map(u => `${u.user.tag} : \`${u.reason || 'Aucune raison'}\``).join('\n');
 
     let embed = new Discord.MessageEmbed()
     .setColor(color)
     .setTitle(`Liste des utilisateurs bannis`)
-    .setDescription(`Il y a ${await (await message.guild.bans.fetch()).size} utilisateur(s) banni(s).
+    .setDescription(`Il y a ${bans.size} utilisateur(s) banni(s).
     
 ${banlist}`)
 

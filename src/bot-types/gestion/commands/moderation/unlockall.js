@@ -38,7 +38,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
         message.guild.channels.cache.forEach(async (channel) => {
         
-        if (channel.type === "GUILD_TEXT") {
+        if (channel.isTextBased()) {
             channel.permissionOverwrites.edit(message.guild.roles.everyone, {
                 SEND_MESSAGES: null,
                 ADD_REACTIONS: null,

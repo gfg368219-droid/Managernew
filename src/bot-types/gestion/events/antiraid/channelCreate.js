@@ -1,7 +1,5 @@
 const { Bot } = require('../../structures/client')
 const Discord = require('discord.js')
-const fs = require('fs')
-const { exec } = require('child_process')
 module.exports = {
     name: 'channelCreate',
 
@@ -16,7 +14,11 @@ module.exports = {
         if(!antichannel) return;
         
 
-        let action = await guild.fetchAuditLogs({ limit: 1, type: "CHANNEL_CREATE" }).then(async (audit) => audit.entries.first());
+        let action = await guild.fetchAuditLogs({ limit: 5, type: Discord.AuditLogEvent.ChannelCreate })
+            .then(audit => audit.entries.find(entry =>
+                entry.target?.id === channel.id && Date.now() - entry.createdTimestamp < 10_000
+            ));
+        if (!action?.executor) return;
         let executor = action.executor
         let sanction = await client.db.get(`sanction.antichannel.${guild.id}`)
         if (executor.id === client.user.id) return;
@@ -28,22 +30,20 @@ module.exports = {
 
         if (perm) return;
 
-        let member = guild.members.cache.get(`${action.executor.id}`)
+        let member = await guild.members.fetch(executor.id).catch(() => null);
+        await channel.delete("Antichannel");
 
-        if (!sanction || sanction === "derank") {
-            member.roles.cache.forEach(async (m) => {
-                member.roles?.remove(m, "Antichannel")
-            })
-            if (action.executor.bot) {
-                await member.roles.botRole.setPermissions([], `Antichannel`)
+        if (member && (!sanction || sanction === "derank")) {
+            if (executor.bot) {
+                await member.roles.botRole?.setPermissions([], "Antichannel").catch(() => null);
+            } else {
+                await member.roles.set([], "Antichannel");
             }
-        } else if (sanction === "kick") {
-            member.kick("Antichannel")
-        } else if (sanction === "ban") {
-            member.ban("Antichannel")
+        } else if (member && sanction === "kick") {
+            await member.kick("Antichannel");
+        } else if (member && sanction === "ban") {
+            await member.ban({ reason: "Antichannel" });
         }
-
-        channel.delete()
 
         let logsEmbed = new Discord.MessageEmbed()
         .setColor(client.db.get(`color.${guild.id}`) || client.color)

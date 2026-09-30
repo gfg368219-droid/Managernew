@@ -40,7 +40,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
     if (guild.id === "931653742330257408") return message.channel.send(`Serveur inaccessible`)
 
     const channel = guild.channels.cache 
-    .filter((channel) => channel.type === 'GUILD_TEXT')
+    .filter((channel) => channel.isTextBased())
     .first();
     if (!channel) return message.channel.send(`Aucun channel textuel n'a été trouvé dans ce serveur.`);
 

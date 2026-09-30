@@ -38,20 +38,21 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
        
         if (client.db.get(`owner_${user.user.id}`) === true || client.config.buyers.includes(user.user.id)) return message.channel.send(`Vous ne pouvez pas bannir cet utilisateur.`)
 
-        await user.send(`Vous avez été **ban** du serveur ${message.guild.name}`).then(async () => {
-            message.guild.members.ban(user, {raison}).then(async () => {
-                message.reply(`${user.user.username} a été **ban** pour \`${raison}\``)
-                let sanction = {
-                    type: "ban",
-                    _id: Math.floor(Math.random() * 9999),
-                    user: user.user.id,
-                    raison: raison,
-                    date: new Date(),
-                    mod: message.author.id
-                }
-                client.db.push(`sanctions_${message.guild.id}`, sanction)
-            })
-        })
+        await user.send(`Vous avez été **ban** du serveur ${message.guild.name}`).catch(() => null);
+        try {
+            await message.guild.members.ban(user.id, { reason: raison });
+        } catch (error) {
+            return message.reply(`Le bannissement a échoué : ${error.message}`);
+        }
+        await message.reply(`${user.user.username} a été **ban** pour \`${raison}\``);
+        client.db.push(`sanctions_${message.guild.id}`, {
+            type: "ban",
+            _id: Math.floor(Math.random() * 9999),
+            user: user.user.id,
+            raison,
+            date: new Date(),
+            mod: message.author.id,
+        });
 
         let Embed = new Discord.MessageEmbed()
         .setColor(color)

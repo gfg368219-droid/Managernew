@@ -44,7 +44,7 @@ module.exports = {
                     `Commande inconnue. Utilisez \`${prefix}help\` pour afficher les commandes disponibles.`
                 )
             }
-            await cmd.run(client, message, args, color, prefix, footer, commandName)
+            await cmd.run(client, message, args, color, prefix, footer, cmd.name)
         } catch (err) {
             console.error(
                 `[gestion] erreur dans la commande "${commandName}" (serveur ${message?.guildId || "inconnu"}) :`,

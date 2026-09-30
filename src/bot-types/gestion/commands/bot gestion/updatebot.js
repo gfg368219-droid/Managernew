@@ -1,9 +1,3 @@
-const Discord = require('discord.js');
-const {bot} = require('../../structures/client'); 
-const request = require('request');
-const { exec } = require('node:child_process')
-const fs = require('fs');
-
 module.exports = {
     name: "updatebot",
     aliases: ["update"],
@@ -35,20 +29,9 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
     
 
-    request('http://localhost:3000/gestion/version', (error, response, body) => {
-        let currentVersion = client.version;
-        if (error) return console.log(error);
-        let version = body;
-        if (currentVersion === version) return message.channel.send(`Le bot est déjà à la dernière version.`)
-        message.channel.send(`Mise à jour du bot....`).then(async () => {
-        client.user.setPresence({ status: 'invisible' })
-        exec(`cd /home/perso/gestion/${client.user.id} && rm -r commands events structures && cd /home/perso/maj/gestion && cp -r * /home/perso/gestion/${client.user.id} && pm2 restart ${client.user.id}`, (err, stdout, stderr) => {})
-        fs.writeFile(`version.json`, JSON.stringify({ version: version }), (err) => {
-            if (err) console.log(err);
-        })
-    })
-    })
-
+    return message.channel.send(
+        "La mise à jour automatique est désactivée sur cet hébergement isolé. Le bot et ses données n'ont pas été modifiés."
+    );
 
     }
 }

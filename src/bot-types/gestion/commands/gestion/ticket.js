@@ -57,6 +57,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
         if (send) {
+        if (!ticket_react) return message.reply(`Configurez d'abord la réaction du ticket avec \`${prefix}ticket react <emoji>\`.`);
 
         let Embed = new Discord.MessageEmbed()
         .setTitle(`${ticket_title || "Non défini"}`)
@@ -65,7 +66,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         .setColor(color)
 
         let m = await message.channel.send({ embeds: [Embed]})
-        await m.react(ticket_react || "")
+        await m.react(ticket_react)
         client.db.set(`ticket_${message.guild.id}`, m.id)
 
         } else if (title) {
@@ -136,7 +137,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             .setFooter(footer)
             .setColor(color)
             let mm = await message.channel.send({ embeds: [Embed], content: `Voici comment le ticket sera affiché :`})
-            await mm.react("")
+            message.channel.send("La réaction du panneau de tickets a été réinitialisée.");
         } else if (reset_bvn) {
             client.db.delete(`ticket_bvn_${message.guild.id}`)
             message.reply("Le message de bienvenue des tickets a été réinitialisé.")
@@ -149,12 +150,12 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it
-            channel.permissionOverwrites.edit(user.id, {
-                VIEW_CHANNEL: true,
-                SEND_MESSAGES: true,
-                ADD_REACTIONS: true,
+            await channel.permissionOverwrites.edit(user.id, {
+                ViewChannel: true,
+                SendMessages: true,
+                AddReactions: true,
             })
-            channel.send(`${user} a été ajouté au ticket.`)
+            await channel.send(`${user} a été ajouté au ticket.`)
         } else if (remove) {
             // if channel don't start with ticket- return;
             let channel = message.channel
@@ -164,12 +165,12 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it
-            channel.permissionOverwrites.edit(user.id, {
-                VIEW_CHANNEL: false,
-                SEND_MESSAGES: false,
-                ADD_REACTIONS: false,
+            await channel.permissionOverwrites.edit(user.id, {
+                ViewChannel: false,
+                SendMessages: false,
+                AddReactions: false,
             })
-            channel.send(`${user} a été retiré du ticket.`)
+            await channel.send(`${user} a été retiré du ticket.`)
         } else if (close) {
             let channel = message.channel
             if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)

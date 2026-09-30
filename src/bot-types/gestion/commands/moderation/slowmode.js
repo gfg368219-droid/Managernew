@@ -42,7 +42,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             return message.reply('Le slowmode a été désactivé');
         }
 
-        if (channel.type === "GUILD_TEXT") {
+        if (channel.isTextBased()) {
             channel.setRateLimitPerUser(time / 1000)
             channel.send(`Le slowmode est désormais de ${args[0]}`)
         }

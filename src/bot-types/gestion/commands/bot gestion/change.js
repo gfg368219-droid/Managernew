@@ -24,7 +24,8 @@ module.exports = {
         let perms = ["1", "2", "3", "4", "5", "public"]
 
         if (args[0] === "remove") {
-            let cmd = client.commands.get(args[1]) || client.commands.get(client.aliases.get(args[1]))
+            let cmd = client.commands.get(args[1]) || client.aliases.get(args[1])
+            if (!cmd) return message.channel.send("Commande introuvable. Vérifiez son nom ou son alias.")
 
             client.db.delete(`perm_${cmd.name}.${message.guild.id}`)
             message.channel.send(`La commande \`${cmd.name}\` n'est plus assigné a aucune commande`)
@@ -36,10 +37,10 @@ module.exports = {
             message.channel.send(`Les permissions des commandes ont été **reset**`)
         } else if (args[0] !== "reset" && args[0] !== "remove"){
 
-        let cmd = client.commands.get(args[0]) || client.commands.get(client.aliases.get(args[0]))
+        let cmd = client.commands.get(args[0]) || client.aliases.get(args[0])
         let perm = args[1]
 
-        if (!cmd) return;
+        if (!cmd) return message.channel.send("Commande introuvable. Vérifiez son nom ou son alias.")
         if (!perms.includes(perm)) return message.channel.send(`Permission invalide, les permissions sont : \`${perms.join("`, `")}\``)
 
         client.db.set(`perm_${cmd.name}.${message.guild.id}`, perm)

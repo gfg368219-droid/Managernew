@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
-const { MessageActionRow, MessageButton } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     name: "rolereact",
@@ -36,8 +36,9 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]) || message.channel;
+if (!channel.isTextBased() || !channel.messages) return message.reply("Veuillez indiquer un salon textuel.");
 if (!args[1]) return message.reply("Veuillez indiquer l'identifiant du message.");
-let messagez = await channel.messages.fetch(args[1]).catch(err => console.error(err));
+let messagez = await channel.messages.fetch(args[1]).catch(() => null);
 if (!messagez) return message.channel.send("Message non trouvé");
 let messageID = messagez.id;
     let role = message.guild.roles.cache.get(args[2]) || message.mentions.roles.first()
@@ -47,24 +48,39 @@ let messageID = messagez.id;
     if (!reaction) return message.reply("Veuillez indiquer une réaction.");
     if (type !== "react" && type !== "button") return message.reply("Le type doit être `react` ou `button`.");
 
-    client.db.set(`rolereact_${message.guild.id}_${messageID}`, { role: role.id, emoji: reaction })
+    const emojiValue = typeof reaction === "string" ? reaction : reaction.toString();
+    if (!role.editable) return message.reply("Le bot ne peut pas attribuer ce rôle : vérifiez sa position dans la hiérarchie.");
 
     let Embed = new Discord.MessageEmbed()
         .setColor(color)
         .setTitle(`Rôle ajouté`)
-        .setDescription(`Le rôle ${role.name} a bien été ajouté au [message](https://discord.com/channels/${message.guild.id}/${channel.id}/${messageID}) avec l'émoji ${reaction}`)
+        .setDescription(`Cliquez sur l'émoji ou le bouton pour obtenir ou retirer le rôle ${role}.`)
         .setFooter(footer)
 
-
-
     if(type === "react"){
-        message.channel.send({ embeds: [Embed] })
-        messagez.react(reaction)
+        client.db.set(`rolereact_${message.guild.id}_${messageID}`, {
+            role: role.id,
+            emoji: emojiValue,
+            type: "react",
+        });
+        await messagez.react(emojiValue);
+        return message.channel.send({
+            embeds: [
+                Embed.setDescription(`Le rôle ${role} a été associé à la réaction ${emojiValue} sur [ce message](https://discord.com/channels/${message.guild.id}/${channel.id}/${messageID}).`),
+            ],
+        });
     } else if(type === "button"){
-        let button = new MessageButton()
-        .setEmoji(reaction)
-        message.channel.send({ embeds: [Embed], components: [button] })
-
+        const button = new ButtonBuilder()
+            .setCustomId(`rolereact:${role.id}`)
+            .setLabel(role.name.slice(0, 80))
+            .setStyle(ButtonStyle.Primary);
+        if (emojiValue) button.setEmoji(emojiValue);
+        const row = new ActionRowBuilder().addComponents(button);
+        const buttonMessage = await channel.send({ embeds: [Embed], components: [row] });
+        client.db.set(`rolereact_${message.guild.id}_${buttonMessage.id}`, {
+            role: role.id,
+            type: "button",
+        });
     }
 
     

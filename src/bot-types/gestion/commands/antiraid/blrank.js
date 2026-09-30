@@ -47,18 +47,21 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
     } 
 
-    if (message.mentions.members.size > 0 || client.users.cache.get(args[0])) {
-
-        let member = message.mentions.members.first()
-
+    const member = message.mentions.members.first() ||
+        (args[0] && args[0] !== "clear" && args[0] !== "on" && args[0] !== "off"
+            ? await message.guild.members.fetch(args[0]).catch(() => null)
+            : null);
+    if (member) {
+        const blockedRanks = client.db.get(`blranks.${message.guild.id}`) || [];
+        if (blockedRanks.includes(member.id)) return message.channel.send(`${member.user.username} est déjà blrank.`);
         client.db.push(`blranks.${message.guild.id}`, member.id)
         client.db.set(`blrankmd_${message.guild.id}_${member.id}`, true)
         message.channel.send(`${member.user.username} est désormais blrank`)
 
     } else if(args[0] === "clear") {
-        let data = await client.db.all().filter(data => data.ID.startsWith(`blrankmd_${message.guild.id}`));
-        client.db.delete(`blrank.${message.guild.id}`)
-        message.channel.send(`${data.length === undefined||null ? 0:data.length} ${data.length > 1 ? "personnes ont été supprimées":"personne a été supprimée"} de la liste blrank`)
+        let data = client.db.all().filter(data => data.ID.startsWith(`blrankmd_${message.guild.id}_`));
+        client.db.delete(`blranks.${message.guild.id}`)
+        message.channel.send(`${data.length} ${data.length > 1 ? "personnes ont été supprimées":"personne a été supprimée"} de la liste blrank`)
 
    
         let count = 0;

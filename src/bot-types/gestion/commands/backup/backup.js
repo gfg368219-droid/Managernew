@@ -40,9 +40,15 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
         let server = args[0] === "server" || args[0] === "serveur"
         let emoji = args[0] === "emoji" || args[0] === "emojis" || args[0] === "emotes" || args[0] === "emote"
+        const action = (args[1] || "").toLowerCase();
+        if (!server && !emoji) return message.channel.send(`Syntaxe : \`${prefix}backup server|emoji create|delete|load|list|clear\``);
+        if (!action) return message.channel.send(`Indiquez une action : \`create\`, \`delete\`, \`load\`, \`list\` ou \`clear\`.`);
+        if (["create", "delete", "load"].includes(action) && !args[2]) {
+            return message.reply("Indiquez le nom du backup.");
+        }
 
         if (server) {
-            if(args[1].toLowerCase() === "create") {
+            if(action === "create") {
                 let nom = args[2]
                 if (!nom) return
                 let backups = client.db.get(`backups_server`)
@@ -65,14 +71,14 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                     message.channel.send(`Le serveur n'a pas pu être sauvegardé`)
                 })
 
-            } else if(args[1].toLowerCase() === "delete") {
+            } else if(action === "delete") {
                 let nom = args[2]
                 if (!nom) return
-                let backupData = client.db.get(`backups_server`).find(b => b.code === nom)
+                let backupData = (client.db.get(`backups_server`) || []).find(b => b.code === nom)
                 if (!backupData) return message.channel.send(`Backup introuvable`)
-                client.db.set(`backups_server`, client.db.get(`backups_server`).filter(b => b.code !== nom))
+                client.db.set(`backups_server`, (client.db.get(`backups_server`) || []).filter(b => b.code !== nom))
                 message.channel.send(`Backup supprimé avec succès`)      
-            } else if(args[1].toLowerCase() === "list") {
+            } else if(action === "list") {
                 let backups = client.db.get(`backups_server`)
                 if (!backups) return message.channel.send(`Aucune backup trouvé`)
                 if (backups.length === 0) return message.channel.send(`Aucune backup trouvé`)
@@ -82,10 +88,10 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                 .setDescription(`${backups.map(b => `${b.code}`).join("\n")}`)
                 .setFooter(footer)
                 message.channel.send({ embeds: [embed] })
-            } else if(args[1].toLowerCase() === "load") {
+            } else if(action === "load") {
                 let nom = args[2]
                 if (!nom) return
-                let backupData = client.db.get(`backups_server`).find(b => b.code === nom)
+                let backupData = (client.db.get(`backups_server`) || []).find(b => b.code === nom)
                 if (!backupData) return message.channel.send(`Backup introuvable`)
                 backup.load(backupData.id, message.guild).then((backupData) => {
                     message.author.send(`Backup chargée avec succès`)
@@ -93,7 +99,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                     console.log(err)
                     message.channel.send(`Le serveur n'a pas pu être e`)
                 })
-            } else if(args[1].toLowerCase() === "clear") {
+            } else if(action === "clear") {
                 // find there is how many backups
                 let backups = client.db.get(`backups_server`)
                 if (!backups) return message.channel.send(`Aucune backup trouvé`)
@@ -104,7 +110,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             }
 
         } else if (emoji) {
-            if(args[1].toLowerCase() === "create") {
+            if(action === "create") {
                 let nom = args[2]
                 if (!nom) return
                 let backups = client.db.get(`backups_emoji`)
@@ -126,14 +132,14 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
                 message.channel.send(`Backup créé avec succès (${emoji.size} emojis)`)
 
-            } else if(args[1].toLowerCase() === "delete") {
+            } else if(action === "delete") {
                 let nom = args[2]
                 if (!nom) return
-                let backupData = client.db.get(`backups_emoji`).find(b => b.code === nom)
+                let backupData = (client.db.get(`backups_emoji`) || []).find(b => b.code === nom)
                 if (!backupData) return message.channel.send(`Backup introuvable`)
-                client.db.set(`backups_emoji`, client.db.get(`backups_emoji`).filter(b => b.code !== nom))
+                client.db.set(`backups_emoji`, (client.db.get(`backups_emoji`) || []).filter(b => b.code !== nom))
                 message.channel.send(`Backup supprimé avec succès`)      
-            } else if(args[1].toLowerCase() === "list") {
+            } else if(action === "list") {
                 let backups = client.db.get(`backups_emoji`)
                 if (!backups) return message.channel.send(`Aucune backup trouvé`)
                 if (backups.length === 0) return message.channel.send(`Aucune backup trouvé`)
@@ -143,26 +149,26 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                 .setDescription(`${backups.map(b => `${b.code} : ${b.serveur}`).join("\n")}`)
                 .setFooter(footer)
                 message.channel.send({ embeds: [embed] })
-            } else if(args[1].toLowerCase() === "load") {
+            } else if(action === "load") {
                 let nom = args[2]
                 if (!nom) return
-                let backupData = client.db.get(`backups_emoji`).find(b => b.code === nom)
+                let backupData = (client.db.get(`backups_emoji`) || []).find(b => b.code === nom)
                 if (!backupData) return message.channel.send(`Backup introuvable`)
                 
                 backupData.emojis.forEach(emote => {
-                    let emoji = Discord.Util.parseEmoji(emote);
-                    if (emoji.id) {
-                        const Link = `https://cdn.discordapp.com/emojis/${emoji.id}.${
-                            emoji.animated ? 'gif' : 'png'
+                    const parsedEmoji = Discord.Util.parseEmoji(emote);
+                    if (parsedEmoji.id) {
+                        const Link = `https://cdn.discordapp.com/emojis/${parsedEmoji.id}.${
+                            parsedEmoji.animated ? 'gif' : 'png'
                         }`;
                         message.guild.emojis
-                            .create(`${Link}`, `${`${emoji.name}`}`)
+                            .create(`${Link}`, `${parsedEmoji.name}`)
                             .catch(error => {
                                                   });
                     }
                 });
                 message.channel.send(`Backup chargée avec succès`)
-            } else if(args[1].toLowerCase() === "clear") {
+            } else if(action === "clear") {
                 let backups = client.db.get(`backups_emoji`)
                 if (!backups) return message.channel.send(`Aucune backup trouvé`)
                 if (backups.length === 0) return message.channel.send(`Aucune backup trouvé`)

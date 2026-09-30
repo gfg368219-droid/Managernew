@@ -32,14 +32,17 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 
-    if (message.mentions.members.size > 0) {
-
-        let member = message.mentions.members.first()
-
-        client.db.delete(`blrankmd_${message.guild.id}_${member.id}`)
-        client.db.set(`blranks.${message.guild.id}`, client.db.get(`blranks.${message.guild.id}`)?.filter(m => m !== member.id) || [])
-        message.channel.send(`${member.user.username} n'est plus blrank`)
+    const targetId = message.mentions.members.first()?.id || args[0];
+    if (!/^\d{17,20}$/.test(targetId || "")) {
+        return message.reply("Mentionnez un utilisateur ou fournissez son identifiant Discord.");
     }
+    const blockedRanks = client.db.get(`blranks.${message.guild.id}`) || [];
+    if (!blockedRanks.includes(targetId)) return message.reply("Cet utilisateur n'est pas blrank.");
+    client.db.delete(`blrankmd_${message.guild.id}_${targetId}`);
+    const remaining = blockedRanks.filter(id => id !== targetId);
+    if (remaining.length) client.db.set(`blranks.${message.guild.id}`, remaining);
+    else client.db.delete(`blranks.${message.guild.id}`);
+    return message.channel.send(`<@${targetId}> n'est plus blrank.`);
     
 
     }

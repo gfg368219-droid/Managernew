@@ -21,24 +21,19 @@ module.exports = {
 
 
 
-if (message.mentions.members.size > 0) {
-
-    let member = message.mentions.members.first()
-    client.db.delete(`owner_${member.user.id}`)
-    if (client.db.get(`${client.user.id}.owner`)?.filter(m => m !== member.user.id).length === 0) { 
-    client.db.delete(`${client.user.id}.owner`)
-    message.channel.send(`${member.user.username} n'est plus owner`)
-    return console.log(`Bête irl`)
-    }
-
-    if(client.db.get(`${client.user.id}.owner`)?.filter(m => m !== member.user.id).length > 0) {
-
-    client.db.set(`${client.user.id}.owner`, client.db.get(`${client.user.id}.owner`)?.filter(m => m !== member.user.id))
-    message.channel.send(`${member.user.username} n'est plus owner`)
-    return console.log(`Smart irl`)
-
-    }
+const targetId = message.mentions.members.first()?.id || args[0];
+if (!/^\d{17,20}$/.test(targetId || "")) {
+    return message.reply("Mentionnez un utilisateur ou fournissez son identifiant Discord.");
 }
+const ownerKey = `${client.user.id}.owner`;
+const owners = client.db.get(ownerKey) || [];
+if (!owners.includes(targetId)) return message.reply("Cet utilisateur n'est pas owner.");
+
+client.db.delete(`owner_${targetId}`);
+const remainingOwners = owners.filter(id => id !== targetId);
+if (remainingOwners.length) client.db.set(ownerKey, remainingOwners);
+else client.db.delete(ownerKey);
+return message.channel.send(`<@${targetId}> n'est plus owner.`);
 
     }
 }

@@ -19,6 +19,7 @@ module.exports = {
     if (!lockurl_vanity) return;
 
     let action = await guild.fetchAuditLogs({ limit: 1, type: "GUILD_UPDATE" }).then(async (audit) => audit.entries.first());
+    if (!action?.executor) return;
     let executor = action.executor
     let sanction = await client.db.get(`sanction.lockurl.${guild.id}`)
     if (executor.id === client.user.id) return;

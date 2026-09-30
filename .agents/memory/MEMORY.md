@@ -1,0 +1,1 @@
+- [Legacy updater safety](legacy-updater-safety.md) — keep the imported auto-updater disabled unless replaced with a workspace-aware, recoverable update flow.

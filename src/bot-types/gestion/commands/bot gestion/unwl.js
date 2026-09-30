@@ -32,14 +32,17 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 
-    if (message.mentions.members.size > 0) {
-
-        let member = message.mentions.members.first()
-
-        client.db.delete(`wlmd_${message.guild.id}_${member.id}`)
-        client.db.set(`wl.${message.guild.id}`, client.db.get(`wl.${message.guild.id}`)?.filter(m => m !== member.id) || [])
-        message.channel.send(`${member.user.username} a été retiré de la whitelist`)
+    const targetId = message.mentions.members.first()?.id || args[0];
+    if (!/^\d{17,20}$/.test(targetId || "")) {
+        return message.reply("Mentionnez un utilisateur ou fournissez son identifiant Discord.");
     }
+    const whitelist = client.db.get(`wl.${message.guild.id}`) || [];
+    if (!whitelist.includes(targetId)) return message.reply("Cet utilisateur n'est pas dans la whitelist.");
+    client.db.delete(`wlmd_${message.guild.id}_${targetId}`);
+    const remaining = whitelist.filter(id => id !== targetId);
+    if (remaining.length) client.db.set(`wl.${message.guild.id}`, remaining);
+    else client.db.delete(`wl.${message.guild.id}`);
+    return message.channel.send(`<@${targetId}> a été retiré de la whitelist.`);
     
 
     }

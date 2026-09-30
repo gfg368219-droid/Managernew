@@ -115,7 +115,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
         message.reply({embeds: [embed], components: [row, row2]}).then((msgembed) => {
 
-        const collector = message.channel.createMessageComponentCollector({filter: m => m.member.user.id === message.author.id, time: 0, componentType: "SELECT_MENU"}); 
+        const collector = message.channel.createMessageComponentCollector({filter: m => m.user.id === message.author.id, time: 0, componentType: Discord.ComponentType.StringSelect});
 
         collector.on("collect", async(c) => {
             if(c.user.id !== message.author.id) return;

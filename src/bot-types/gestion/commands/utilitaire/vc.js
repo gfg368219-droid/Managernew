@@ -32,7 +32,7 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-const voiceChannels = message.guild.channels.cache.filter(c => c.type === 'GUILD_VOICE');
+const voiceChannels = message.guild.channels.cache.filter(c => c.isVoiceBased());
 const members = message.guild.members.cache.filter(m => !m.bot && m.voice.channelId
     != null);
 

@@ -36,7 +36,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]) || message.channel;
         if (!channel) return;
 
-        if (channel.type === "GUILD_TEXT") {
+        if (channel.isTextBased()) {
             channel.permissionOverwrites.edit(message.guild.roles.everyone, {
                 SEND_MESSAGES: null,
                 ADD_REACTIONS: null,

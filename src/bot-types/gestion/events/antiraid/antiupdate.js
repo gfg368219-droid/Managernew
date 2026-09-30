@@ -19,7 +19,11 @@ module.exports = {
     if (oldGuild === newGuild) return;
     if (oldGuild !== newGuild) {
 
-    let action = await guild.fetchAuditLogs({ limit: 1, type: "GUILD_UPDATE" }).then(async (audit) => audit.entries.first());
+    let action = await guild.fetchAuditLogs({ limit: 5, type: Discord.AuditLogEvent.GuildUpdate })
+        .then(audit => audit.entries.find(entry =>
+            entry.target?.id === guild.id && Date.now() - entry.createdTimestamp < 10_000
+        ));
+    if (!action?.executor) return;
     let executor = action.executor
     let sanction = await client.db.get(`sanction.antiupdate.${guild.id}`)
     if (executor.id === client.user.id) return;
@@ -44,11 +48,6 @@ module.exports = {
     } else {
         await newGuild.setBanner(oldGuild.bannerURL())    
     }
-    if(oldGuild.position === newGuild.position
-    ){
-    } else {
-    await newGuild.setChannelPositions([{ channel: oldGuild.id, position: oldGuild.position }])                 
-    }
     if(oldGuild.systemChannel  === newGuild.systemChannel) {
     } else {
     await newGuild.setSystemChannel(oldGuild.systemChannel)      
@@ -61,9 +60,12 @@ module.exports = {
     } else {
     await newGuild.setVerificationLevel(oldGuild.verificationLevel ) 
     }
-    if(oldGuild.widget  === newGuild.widget ){
-    } else {
-    await newGuild.setWidget(oldGuild.widget )
+    if (oldGuild.widgetEnabled !== newGuild.widgetEnabled ||
+        oldGuild.widgetChannelId !== newGuild.widgetChannelId) {
+        await newGuild.setWidgetSettings({
+            enabled: oldGuild.widgetEnabled ?? false,
+            channel: oldGuild.widgetChannelId,
+        });
     }
     if(oldGuild.splashURL  === newGuild.splashURL) {
     } else {
@@ -90,12 +92,6 @@ module.exports = {
     } else {
     await newGuild.setAFKChannel(oldGuild.afkChannel )
     }
-    if(oldGuild.region  === newGuild.region 
-    ){
-    } else {
-    await newGuild.setRegion(oldGuild.region ) 
-    }
-                                         
     if(oldGuild.afkTimeout  === newGuild.afkTimeout 
     ){
     } else {
@@ -103,12 +99,13 @@ module.exports = {
     }
 
 
-    if (!sanction || sanction === "derank") {
-        guild.members.cache.get(executor.id).roles.set([])
-    } else if (sanction === "kick") {
-        guild.members.cache.get(executor.id).kick({ reason: "antiupdate" })
-    } else if (sanction === "ban") {
-        guild.members.cache.get(executor.id).ban({ reason: "antiupdate" })
+    const executorMember = await guild.members.fetch(executor.id).catch(() => null);
+    if (executorMember && (!sanction || sanction === "derank")) {
+        await executorMember.roles.set([], "Anti-update");
+    } else if (executorMember && sanction === "kick") {
+        await executorMember.kick({ reason: "antiupdate" });
+    } else if (executorMember && sanction === "ban") {
+        await executorMember.ban({ reason: "antiupdate" });
     }
 
     let logsEmbed = new Discord.MessageEmbed()

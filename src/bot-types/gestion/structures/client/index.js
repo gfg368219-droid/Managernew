@@ -1,11 +1,12 @@
-const { Client, Collection, Intents } = require('discord.js')
+const { Client, Collection, Intents, Partials } = require('discord.js')
 const db = require('quick.db')
 const fs = require('fs')
 global.print = console.log
 
 class bot extends Client {
     constructor(options = {
-        intents: [Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_WEBHOOKS, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_BANS, Intents.FLAGS.GUILD_INVITES, Intents.FLAGS.GUILD_INTEGRATIONS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.DIRECT_MESSAGE_REACTIONS, Intents.FLAGS.DIRECT_MESSAGE_TYPING, Intents.FLAGS.MESSAGE_CONTENT]
+        intents: [Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_WEBHOOKS, Intents.FLAGS.GUILD_MESSAGE_REACTIONS, Intents.FLAGS.GUILD_BANS, Intents.FLAGS.GUILD_INVITES, Intents.FLAGS.GUILD_INTEGRATIONS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.DIRECT_MESSAGE_REACTIONS, Intents.FLAGS.DIRECT_MESSAGE_TYPING, Intents.FLAGS.MESSAGE_CONTENT],
+        partials: [Partials.Channel, Partials.Message, Partials.Reaction, Partials.User]
     }) {
         super(options);
         this.setMaxListeners(15)
@@ -19,6 +20,9 @@ class bot extends Client {
         this.version = require('../../version.json').version
         this.snipe = new Collection()
         this.config = require('../../config')
+        this.config.rootBuyers = [...(this.config.buyers || [])]
+        const extraBuyers = db.get("extra_buyers") || []
+        this.config.buyers = [...new Set([...this.config.rootBuyers, ...extraBuyers])]
         this.commands = new Collection()
         this.aliases = new Collection()
         this.loadCommands()
@@ -85,7 +89,11 @@ class bot extends Client {
                     continue
                 }
                 const eventName = event.name === 'ready' ? 'clientReady' : event.name
-                this.on(eventName, (...args) => event.run(this, ...args))
+                this.on(eventName, (...args) => {
+                    Promise.resolve(event.run(this, ...args)).catch(error => {
+                        console.error(`[gestion] erreur dans l'événement ${eventName} (${category}/${eventFile}) :`, error)
+                    })
+                })
                 loadedEvents += 1
             }
         }

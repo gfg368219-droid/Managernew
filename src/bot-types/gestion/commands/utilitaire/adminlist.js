@@ -34,17 +34,17 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
 
-       let admins = message.guild.members.cache.filter(m => m.permissions.has("ADMINISTRATOR") && !m.user.bot).map(function(b) {return `<@${b.id}>`}).join("\n");
-       let count = message.guild.members.cache.filter(m => m.permissions.has("ADMINISTRATOR") && !m.user.bot).size;
+       let admins = message.guild.members.cache.filter(m => m.permissions.has(Discord.PermissionFlagsBits.Administrator) && !m.user.bot).map(function(b) {return `<@${b.id}>`}).join("\n");
+       let count = message.guild.members.cache.filter(m => m.permissions.has(Discord.PermissionFlagsBits.Administrator) && !m.user.bot).size;
 
-       let adminsbot = message.guild.members.cache.filter(m => m.permissions.has("ADMINISTRATOR") && m.user.bot).map(function(b) {return `<@${b.id}>`}).join("\n");
-       let countbot = message.guild.members.cache.filter(m => m.permissions.has("ADMINISTRATOR") && m.user.bot).size;
+       let adminsbot = message.guild.members.cache.filter(m => m.permissions.has(Discord.PermissionFlagsBits.Administrator) && m.user.bot).map(function(b) {return `<@${b.id}>`}).join("\n");
+       let countbot = message.guild.members.cache.filter(m => m.permissions.has(Discord.PermissionFlagsBits.Administrator) && m.user.bot).size;
 
 
        let embed = new Discord.MessageEmbed()
        .setTitle("Liste des admins")
-       .addField(`Humains (${count})`, `${admins}`)
-       .addField(`Bots (${countbot})`, `${adminsbot}`)
+       .addField(`Humains (${count})`, admins || "Aucun")
+       .addField(`Bots (${countbot})`, adminsbot || "Aucun")
        .setColor(color)
        .setFooter(`${footer}`);
 

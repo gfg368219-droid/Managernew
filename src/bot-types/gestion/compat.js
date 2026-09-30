@@ -15,6 +15,25 @@ const {
   StringSelectMenuOptionBuilder,
 } = discord;
 
+const originalPermissionResolve = discord.PermissionsBitField.resolve;
+const legacyPermissionNames = {
+  READ_MESSAGES: "ViewChannel",
+  MANAGE_SERVER: "ManageGuild",
+  MANAGE_EMOJIS: "ManageGuildExpressions",
+  MANAGE_EMOJIS_AND_STICKERS: "ManageGuildExpressions",
+  USE_SLASH_COMMANDS: "UseApplicationCommands",
+};
+
+discord.PermissionsBitField.resolve = function resolveLegacyPermission(bit) {
+  if (typeof bit === "string") {
+    const normalizedName = legacyPermissionNames[bit] ||
+      bit.toLowerCase().split("_").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+    const normalizedBit = discord.PermissionFlagsBits[normalizedName];
+    if (normalizedBit !== undefined) return originalPermissionResolve.call(this, normalizedBit);
+  }
+  return originalPermissionResolve.call(this, bit);
+};
+
 const buttonStyles = {
   PRIMARY: 1,
   SECONDARY: 2,
@@ -30,6 +49,13 @@ class MessageEmbed extends EmbedBuilder {
   }
 
   setFooter() {
+    const [textOrOptions, iconURL] = arguments;
+    if (typeof textOrOptions === "string") {
+      return super.setFooter({ text: textOrOptions, iconURL });
+    }
+    if (textOrOptions && typeof textOrOptions === "object") {
+      return super.setFooter(textOrOptions);
+    }
     return this;
   }
 
@@ -46,9 +72,32 @@ class MessageButton extends ButtonBuilder {
   }
 
   setEmoji(emoji) {
-    if (typeof emoji === "string") return super.setEmoji({ name: emoji });
+    if (typeof emoji === "string") {
+      const customEmoji = emoji.match(/^<(a?):([^:]+):(\d+)>$/);
+      if (customEmoji) {
+        return super.setEmoji({
+          name: customEmoji[2],
+          id: customEmoji[3],
+          animated: customEmoji[1] === "a",
+        });
+      }
+      return super.setEmoji({ name: emoji });
+    }
     return super.setEmoji(emoji);
   }
+}
+
+function parseLegacyEmoji(value) {
+  const raw = String(value || "");
+  const customEmoji = raw.match(/^<(a?):([^:]+):(\d+)>$/);
+  if (customEmoji) {
+    return {
+      animated: customEmoji[1] === "a",
+      name: customEmoji[2],
+      id: customEmoji[3],
+    };
+  }
+  return { animated: false, name: raw, id: null };
 }
 
 const intents = {};
@@ -79,6 +128,10 @@ Object.assign(discord, {
   MessageSelectMenu: StringSelectMenuBuilder,
   MessageSelectOption: StringSelectMenuOptionBuilder,
   Intents: { FLAGS: intents },
+  Util: {
+    ...(discord.Util && typeof discord.Util === "object" ? discord.Util : {}),
+    parseEmoji: discord.Util?.parseEmoji || parseLegacyEmoji,
+  },
 });
 
 const originalMessageDelete = Message.prototype.delete;

@@ -33,16 +33,19 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 
-    if (args[0] === "on") {
+    const action = (args[0] || "").toLowerCase();
+    if (action === "on") {
         if(client.db.get(`updatedm`) === true) return message.channel.send(`Le updatedm est déjà activé.`)
         client.db.set(`updatedm`, true);
         message.channel.send(`Le updatedm est maintenant activé.`);
     }
 
-    if (args[0] === "off") {
+    else if (action === "off") {
         if(!client.db.get(`updatedm`)) return message.channel.send(`Le updatedm est déjà désactivé.`)
         client.db.delete(`updatedm`);
         message.channel.send(`Le updatedm est maintenant désactivé.`);
+    } else {
+        return message.reply(`Utilisation : \`${prefix}updatedm on|off\``);
     }
 
 
