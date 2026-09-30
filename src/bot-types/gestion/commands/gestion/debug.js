@@ -25,7 +25,7 @@ if(!staff.includes(message.author.id)) pass = true;
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-
+        return message.channel.send("Cette commande n'est pas implémentée.");
 
 
         

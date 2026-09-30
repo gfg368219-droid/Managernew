@@ -33,14 +33,12 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 
-        let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]) || message.channel;
-        if(!channel) return;
-
         let on = args[0] === "on"
         let off = args[0] === "off"
         let add = args[0] === "add"
         let remove = args[0] === "remove"
         let list = args[0] === "list"
+        if (!on && !off && !add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `on`, `off`, `add`, `remove` ou `list`.");
 
         if (on) {
             client.db.set(`badw_${message.guild.id}`, true)
@@ -53,8 +51,8 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         }
 
         if (add) {
+            if (!args[1]) return message.reply("Veuillez indiquer un mot.");
             let word = args[1].toLowerCase()
-            if(!word) return;
             let words = client.db.get(`badwords_${message.guild.id}`) || []
             if(words.includes(word)) return message.reply(`Ce badword existe déjà`)
             client.db.push(`badwords_${message.guild.id}`, word)
@@ -62,9 +60,9 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         }
 
         if (remove) {
+            if (!args[1]) return message.reply("Veuillez indiquer un mot.");
             let word = args[1].toLowerCase()
-            if(!word) return;
-            let words = client.db.get(`badwords_${message.guild.id}`)
+            let words = client.db.get(`badwords_${message.guild.id}`) || []
             if (words.length > 0) {
             if(!words.includes(word)) return message.reply(`Ce badword n'existe pas`)
             }

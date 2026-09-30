@@ -51,7 +51,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         if (remove) {
             let number = args[1] - 1;
 
-            if (isNaN(number)) return;
+            if (isNaN(number) || number < 0) return message.reply("Veuillez indiquer un numéro valide.");
             let soutienz = client.db.get(`soutien_${message.guild.id}`) || []
             soutienz.map(async (soutien, i) => {
                 if (i === number) {

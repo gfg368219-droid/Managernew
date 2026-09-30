@@ -27,6 +27,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         if (message.attachments.size <= 0) {
         let name = args[0];
         let emojiarg = args[1] || message.attachments.first()?.url;
+        if (!emojiarg) return message.channel.send("Utilisation : `addemoji <nom> <emoji>`");
         let emojiparse = Discord.Util.parseEmoji(emojiarg);
         if(!emojiparse) return message.channel.send("Format de l'émoji incorrect");
 
@@ -38,8 +39,9 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         });
     } else if (message.attachments.size > 0) {
         let emojiUrll = message.attachments.first().url;
-        if (!emojiUrll) return;
+        if (!emojiUrll) return message.channel.send("Veuillez joindre une image ou un émoji.");
         let nom = args[0];
+        if (!nom) return message.channel.send("Veuillez indiquer un nom pour l'émoji.");
             message.guild.emojis.create(emojiUrll, `${nom}`).then((aaa) => {
             message.channel.send(`L'émoji ${aaa} (**${nom}**) a été créé avec succès`);
         });

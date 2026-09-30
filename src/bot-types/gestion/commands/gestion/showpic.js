@@ -40,7 +40,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             let info = !args[0]
 
             if (on) {
-                if (!channel) return;
+                if (!channel) return message.reply("Salon introuvable.");
                 client.db.set(`show_pic_${message.guild.id}`, channel.id)
                 message.channel.send(`Le salon de snipe pdp est désormais ${channel}`)
             } else if (off) {
@@ -54,6 +54,8 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                 .addField(`Salon de snipe pdp`, `${"<#" + client.db.get(`show_pic_${message.guild.id}`) + ">" || "Aucun"}`)	
                 .setFooter(footer)
                 message.channel.send({ embeds: [Embed] })
+            } else {
+                message.reply("Sous-commande invalide. Utilisez `on` ou `off`.");
             }
 
 

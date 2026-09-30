@@ -34,6 +34,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let add = args[0] === "set"
         let remove = args[0] === "del"
         let list = !args[0]
+        if (!add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `set` ou `del`.");
 
         if (add) {
             let texte = args.slice(1).join(" ")

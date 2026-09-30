@@ -35,11 +35,12 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
         let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]) || message.channel;
-        if(!channel) return;
+        if(!channel) return message.reply("Salon introuvable.");
 
         let add = args[0] === "add"
         let remove = args[0] === "remove"
         let list = args[0] === "list"
+        if (!add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `add`, `remove` ou `list`.");
 
         if (add) {
             client.db.set(`photo_${channel.id}`, true)

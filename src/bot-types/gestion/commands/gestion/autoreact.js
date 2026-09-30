@@ -33,18 +33,16 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 
-        let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]) || message.channel;
-        if(!channel) return;
-
         let add = args[0] === "add"
         let remove = args[0] === "remove"
         let list = args[0] === "list"
+        if (!add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `add`, `remove` ou `list`.");
 
         if (add) {
             let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1])
             let emoji = args[2] || message.guild.emoji
-            if (!emoji) return;
-            if (!channel) return;
+            if (!emoji) return message.reply("Veuillez indiquer un émoji.");
+            if (!channel) return message.reply("Salon introuvable.");
             client.db.push(`autoreact_${message.guild.id}`, {channel: channel.id, emoji: emoji})
             message.reply(`Le messages dans ${channel} auront automatiquement comme réaction : ${emoji}`)
         }
@@ -52,8 +50,8 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         if (remove) {
             let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1])
             let emoji = args[2] || message.guild.emoji
-            if (!emoji) return;
-            if (!channel) return;
+            if (!emoji) return message.reply("Veuillez indiquer un émoji.");
+            if (!channel) return message.reply("Salon introuvable.");
             client.db.set(`autoreact_${message.guild.id}`, client.db.get(`autoreact_${message.guild.id}`).filter(r => r.channel !== channel.id && r.emoji !== emoji))
             message.reply(`Le messages dans ${channel} n'auront plus automatiquement comme réaction : ${emoji}`)
         }

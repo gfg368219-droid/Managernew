@@ -53,6 +53,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
         let add = args[0] === "add"
         let remove = args[0] === "remove"
+        if (!send && !title && !description && !react && !bvn && !close && !reset && !reset_title && !reset_description && !reset_react && !reset_bvn && !add && !remove) return message.reply("Sous-commande invalide. Consultez l'aide de `ticket`.");
 
 
         if (send) {
@@ -68,6 +69,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         client.db.set(`ticket_${message.guild.id}`, m.id)
 
         } else if (title) {
+            if (!args.slice(1).join(" ")) return message.reply("Veuillez indiquer un titre.");
             client.db.set(`ticket_title_${message.guild.id}`, args.slice(1).join(" "))
             let Embed = new Discord.MessageEmbed()
             .setTitle(`${args.slice(1).join(" ")}`)
@@ -76,6 +78,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             .setColor(color)
             await message.channel.send({ embeds: [Embed], content: `Voici comment le ticket sera affiché :`})
         } else if (description) {
+            if (!args.slice(1).join(" ")) return message.reply("Veuillez indiquer une description.");
             client.db.set(`ticket_description_${message.guild.id}`, args.slice(1).join(" "))
             let Embed = new Discord.MessageEmbed()
             .setTitle(`${ticket_title || "Non défini"}`)
@@ -84,6 +87,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             .setColor(color)
             await message.channel.send({ embeds: [Embed], content: `Voici comment le ticket sera affiché :`})
         } else if (react) {
+            if (!args.slice(1).join(" ")) return message.reply("Veuillez indiquer une réaction.");
             client.db.set(`ticket_react_${message.guild.id}`, args.slice(1).join(" "))
             let Embed = new Discord.MessageEmbed()
             .setTitle(`${ticket_title || "Non défini"}`)
@@ -94,6 +98,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             let mm = await message.channel.send({ embeds: [Embed], content: `Voici comment le ticket sera affiché :`})
             await mm.react(args.slice(1).join(" "))
     } else if (bvn) {
+        if (!args.slice(1).join(" ")) return message.reply("Veuillez indiquer un message.");
         client.db.set(`ticket_bvn_${message.guild.id}`, args.slice(1).join(" "))
         message.channel.send(`Le message de bienvenue (afficher en embed) des tickets a été modifié.`)
      } else if (reset) {
@@ -132,10 +137,15 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             .setColor(color)
             let mm = await message.channel.send({ embeds: [Embed], content: `Voici comment le ticket sera affiché :`})
             await mm.react("")
+        } else if (reset_bvn) {
+            client.db.delete(`ticket_bvn_${message.guild.id}`)
+            message.reply("Le message de bienvenue des tickets a été réinitialisé.")
         } else if (add) {
             // if channel don't start with ticket- return;
             let channel = message.channel
+            if (!args[1] && !message.mentions.members.first()) return message.reply("Veuillez indiquer un utilisateur.");
             let user = message.mentions.members.first() || message.guild.members.cache.get(args[1]) || message.guild.members.cache.find(m => m.displayName.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.username.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.tag.toLowerCase().includes(args[1].toLowerCase()))
+            if (!user) return message.reply("Utilisateur introuvable.");
             if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it
@@ -148,7 +158,9 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         } else if (remove) {
             // if channel don't start with ticket- return;
             let channel = message.channel
+            if (!args[1] && !message.mentions.members.first()) return message.reply("Veuillez indiquer un utilisateur.");
             let user = message.mentions.members.first() || message.guild.members.cache.get(args[1]) || message.guild.members.cache.find(m => m.displayName.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.username.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.tag.toLowerCase().includes(args[1].toLowerCase()))
+            if (!user) return message.reply("Utilisateur introuvable.");
             if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it

@@ -25,7 +25,7 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
-     
+     return message.channel.send("Les giveaways sont désactivés.");
 
     }
 }

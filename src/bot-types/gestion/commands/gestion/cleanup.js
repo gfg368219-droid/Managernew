@@ -34,9 +34,9 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
         let channelInput = message.mentions.channels.first() || message.guild.channels.cache.get(args[0])
-        if (!channelInput) return;
+        if (!channelInput) return message.channel.send("Veuillez indiquer un salon vocal.");
         
-        if (channelInput.type !== 'GUILD_VOICE') return;
+        if (channelInput.type !== 'GUILD_VOICE') return message.channel.send("Le salon indiqué doit être vocal.");
 
         // voice kick all members in channelInput
         channelInput.members.forEach(member => {

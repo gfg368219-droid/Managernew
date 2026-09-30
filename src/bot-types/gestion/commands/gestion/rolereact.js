@@ -36,12 +36,16 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
 
 let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]) || message.channel;
+if (!args[1]) return message.reply("Veuillez indiquer l'identifiant du message.");
 let messagez = await channel.messages.fetch(args[1]).catch(err => console.error(err));
 if (!messagez) return message.channel.send("Message non trouvé");
 let messageID = messagez.id;
     let role = message.guild.roles.cache.get(args[2]) || message.mentions.roles.first()
     let reaction = message.guild.emojis.cache.get(args[3]) || args[3]
     let type = args[4]
+    if (!role) return message.reply("Veuillez indiquer un rôle.");
+    if (!reaction) return message.reply("Veuillez indiquer une réaction.");
+    if (type !== "react" && type !== "button") return message.reply("Le type doit être `react` ou `button`.");
 
     client.db.set(`rolereact_${message.guild.id}_${messageID}`, { role: role.id, emoji: reaction })
 

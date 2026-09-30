@@ -39,15 +39,16 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let add = args[0] === "add"
         let remove = args[0] === "remove"
         let list = args[0] === "list"
+        if (!add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `add`, `remove` ou `list`.");
 
         if (add) {
-            if(!channel) return;
+            if(!channel) return message.reply("Salon introuvable.");
             client.db.set(`ghostjoin_${channel.id}`, true)
             message.reply(`Le channel ${channel} est désormais un channel ghostjoin`)
         }
 
         if (remove) {
-            if(!channel) return;
+            if(!channel) return message.reply("Salon introuvable.");
             client.db.delete(`ghostjoin_${channel.id}`)
             message.reply(`Le channel ${channel} n'est plus un channel ghostjoin`)
         }

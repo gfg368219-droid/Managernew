@@ -36,7 +36,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let channelInput = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]) || message.member.voice.channel;
         if (!channelInput) return message.channel.send(`Vous devez être dans un salon vocal pour utiliser cette commande ou sinon en mentionner un.`)
         
-    if (channelInput.type !== 'GUILD_VOICE') return;
+    if (channelInput.type !== 'GUILD_VOICE') return message.channel.send("Le salon indiqué doit être vocal.");
 
         const channels = message.guild.channels.cache.filter(ch => ch.id !== channelInput.id && ch.isText() && ch.members.size > 0)
         for await(const [_, channel] of channels)

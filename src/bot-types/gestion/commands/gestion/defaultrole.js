@@ -39,15 +39,16 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let add = args[0] === "add"
         let remove = args[0] === "remove"
         let list = args[0] === "list"
+        if (!add && !remove && !list) return message.reply("Sous-commande invalide. Utilisez `add`, `remove` ou `list`.");
 
         if (add) {
-            if (!role) return;
+            if (!role) return message.reply("Veuillez indiquer un rôle.");
             client.db.set(`joinrole_${message.guild.id}_${role.id}`, true)
             message.reply(`Le rôle ${role.name} est désormais un joinrole`)
         }
 
         if (remove) {
-            if (!role) return;
+            if (!role) return message.reply("Veuillez indiquer un rôle.");
             client.db.delete(`joinrole_${message.guild.id}_${role.id}`)
             message.reply(`Le rôle ${role.name} n'est plus un joinrole`)
         }
