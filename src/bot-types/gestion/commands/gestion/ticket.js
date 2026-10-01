@@ -11,9 +11,26 @@ const { closeTicketChannel, isTicketChannel } = require('../../utils/ticket-runt
 module.exports = {
     name: "ticket",
     aliases: [],
-    description: "Permet de gérer les tickets",
+    description: "Ouvre le panneau de réglages, publie le panneau de tickets et gère les tickets. Les sous-commandes historiques restent disponibles.",
     category: "gestion",
-    usage: ["ticket", "ticket publish", "ticket title <texte>", "ticket reset_title", "ticket bvn <texte>", "ticket description <texte>", "ticket reset_description", "ticket react", "ticket reset_react", "ticket close", "ticket add", "ticket remove"],
+    usage: [
+        "ticket",
+        "ticket settings",
+        "ticket publish",
+        "ticket send",
+        "ticket title <texte>",
+        "ticket reset_title",
+        "ticket description <texte>",
+        "ticket reset_description",
+        "ticket react <emoji>",
+        "ticket reset_react",
+        "ticket bvn <texte>",
+        "ticket reset_bvn",
+        "ticket reset",
+        "ticket close",
+        "ticket add <membre>",
+        "ticket remove <membre>",
+    ],
 
     /**
      * @param {bot} client 
