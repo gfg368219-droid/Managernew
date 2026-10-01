@@ -1,12 +1,19 @@
 const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
+const {
+    buildTicketPublishMessage,
+    buildTicketSettingsMessage,
+    resetTicketSettings,
+    settingsKeys,
+} = require('../../utils/ticket-settings');
+const { closeTicketChannel, isTicketChannel } = require('../../utils/ticket-runtime');
 
 module.exports = {
     name: "ticket",
     aliases: [],
     description: "Permet de gérer les tickets",
     category: "gestion",
-    usage: ["ticket", "ticket title <texte>", "ticket reset_title", "ticket bvn <texte>", "ticket description <texte>", "ticket reset_description", "ticket react", "ticket reset_react", "ticket close", "ticket add", "ticket remove"],
+    usage: ["ticket", "ticket publish", "ticket title <texte>", "ticket reset_title", "ticket bvn <texte>", "ticket description <texte>", "ticket reset_description", "ticket react", "ticket reset_react", "ticket close", "ticket add", "ticket remove"],
 
     /**
      * @param {bot} client 
@@ -32,13 +39,28 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
+        const guildId = message.guild.id;
+        const subcommand = String(args[0] || "").toLowerCase();
+        if (!subcommand || subcommand === "settings") {
+            const settingsMessage = await message.reply(
+                buildTicketSettingsMessage(client, guildId, prefix)
+            );
+            const keys = settingsKeys(guildId);
+            client.db.set(keys.settingsMessage, settingsMessage.id);
+            client.db.set(keys.settingsChannel, message.channel.id);
+            return settingsMessage;
+        }
+        if (subcommand === "publish" || subcommand === "send") {
+            const panelMessage = await message.channel.send(
+                buildTicketPublishMessage(client, guildId)
+            );
+            client.db.set(settingsKeys(guildId).panelMessage, panelMessage.id);
+            return panelMessage;
+        }
 
 
         let ticket_title = client.db.get(`ticket_title_${message.guild.id}`)
         let ticket_description = client.db.get(`ticket_description_${message.guild.id}`)
-        let ticket_react = client.db.get(`ticket_react_${message.guild.id}`)
-
-        let send = !args[0]
         let title = args[0] === "title"
         let description = args[0] === "description"
         let react = args[0] === "react"
@@ -53,23 +75,10 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
 
         let add = args[0] === "add"
         let remove = args[0] === "remove"
-        if (!send && !title && !description && !react && !bvn && !close && !reset && !reset_title && !reset_description && !reset_react && !reset_bvn && !add && !remove) return message.reply("Sous-commande invalide. Consultez l'aide de `ticket`.");
+        if (!title && !description && !react && !bvn && !close && !reset && !reset_title && !reset_description && !reset_react && !reset_bvn && !add && !remove) return message.reply("Sous-commande invalide. Consultez l'aide de `ticket`.");
 
 
-        if (send) {
-        if (!ticket_react) return message.reply(`Configurez d'abord la réaction du ticket avec \`${prefix}ticket react <emoji>\`.`);
-
-        let Embed = new Discord.MessageEmbed()
-        .setTitle(`${ticket_title || "Non défini"}`)
-        .setDescription(`${ticket_description || "Non défini"}`)
-        .setFooter(footer)
-        .setColor(color)
-
-        let m = await message.channel.send({ embeds: [Embed]})
-        await m.react(ticket_react)
-        client.db.set(`ticket_${message.guild.id}`, m.id)
-
-        } else if (title) {
+        if (title) {
             if (!args.slice(1).join(" ")) return message.reply("Veuillez indiquer un titre.");
             client.db.set(`ticket_title_${message.guild.id}`, args.slice(1).join(" "))
             let Embed = new Discord.MessageEmbed()
@@ -103,10 +112,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         client.db.set(`ticket_bvn_${message.guild.id}`, args.slice(1).join(" "))
         message.channel.send(`Le message de bienvenue (afficher en embed) des tickets a été modifié.`)
      } else if (reset) {
-            client.db.delete(`ticket_${message.guild.id}`)
-            client.db.delete(`ticket_title_${message.guild.id}`)
-            client.db.delete(`ticket_description_${message.guild.id}`)
-            client.db.delete(`ticket_react_${message.guild.id}`)
+            resetTicketSettings(client, message.guild.id)
             let Embed = new Discord.MessageEmbed()
             .setTitle(`Non défini`)
             .setDescription(`Non défini`)
@@ -147,7 +153,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             if (!args[1] && !message.mentions.members.first()) return message.reply("Veuillez indiquer un utilisateur.");
             let user = message.mentions.members.first() || message.guild.members.cache.get(args[1]) || message.guild.members.cache.find(m => m.displayName.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.username.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.tag.toLowerCase().includes(args[1].toLowerCase()))
             if (!user) return message.reply("Utilisateur introuvable.");
-            if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
+            if (!isTicketChannel(channel)) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it
             await channel.permissionOverwrites.edit(user.id, {
@@ -162,7 +168,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             if (!args[1] && !message.mentions.members.first()) return message.reply("Veuillez indiquer un utilisateur.");
             let user = message.mentions.members.first() || message.guild.members.cache.get(args[1]) || message.guild.members.cache.find(m => m.displayName.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.username.toLowerCase().includes(args[1].toLowerCase())) || message.guild.members.cache.find(m => m.user.tag.toLowerCase().includes(args[1].toLowerCase()))
             if (!user) return message.reply("Utilisateur introuvable.");
-            if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
+            if (!isTicketChannel(channel)) return message.channel.send(`Ce n'est pas un ticket.`)
 
             // change chanel permissions and add permission to user to see it and write in it
             await channel.permissionOverwrites.edit(user.id, {
@@ -172,19 +178,44 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             })
             await channel.send(`${user} a été retiré du ticket.`)
         } else if (close) {
-            let channel = message.channel
-            if (!channel.name.startsWith("ticket-")) return message.channel.send(`Ce n'est pas un ticket.`)
+            const channel = message.channel;
+            if (!isTicketChannel(channel)) return message.channel.send(`Ce n'est pas un ticket.`);
 
-            message.reply(`Êtes vous sur de vouloir fermer ce ticket ?, tapez \`${prefix}confirm\` pour confirmer.`).then(async (m) => {
-                message.channel.awaitMessages({filter: m => m.author.id === message.author.id, max: 1, time: 60000, errors: ["time"]}).then((collected) => {
-                    if (collected.first().content === `${prefix}confirm`) {
-                        channel.delete()
+            const confirmation = await message.reply(
+                `Êtes-vous sûr de vouloir fermer ce ticket ? Tapez \`${prefix}confirm\` pour confirmer.`
+            );
+            let collected;
+            try {
+                collected = await message.channel.awaitMessages({
+                    filter: response => response.author.id === message.author.id,
+                    max: 1,
+                    time: 60000,
+                    errors: ["time"],
+                });
+            } catch {
+                return confirmation.edit("La commande a été annulée.");
+            }
+            if (collected.first()?.content !== `${prefix}confirm`) {
+                return confirmation.edit("La commande a été annulée.");
+            }
+            try {
+                await closeTicketChannel(
+                    client,
+                    message.guild,
+                    channel,
+                    message.author.tag,
+                    {
+                        beforeDelete: ({ transcriptSent }) => confirmation.edit(
+                            transcriptSent
+                                ? "Fermeture du ticket… Le transcript a été envoyé en message privé."
+                                : "Fermeture du ticket…"
+                        ),
                     }
-                }).catch(() => {
-                    m.edit(`La commande a été annulée.`)
-                })
-            })
-            
+                );
+            } catch (error) {
+                console.error(`[gestion] impossible de fermer le ticket (${channel.id}) :`, error);
+                await confirmation.edit("Impossible de fermer ce ticket.").catch(() => null);
+            }
         }
              
 
