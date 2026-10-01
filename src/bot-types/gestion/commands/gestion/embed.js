@@ -34,67 +34,56 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                     label: "Titre", 
                     description: "Clique ici pour changer le titre de l'embed", 
                     value: "title", 
-                    emoji: ""
                 }, 
                 {
                     label: "Description", 
                     description: "Clique ici pour changer la description de l'embed", 
                     value: "description", 
-                    emoji: ""
                 }, 
                 {
                     label: "Ajouter un Field", 
                     description:"Clique ici pour ajouter un field à l'embed", 
                     value: "fields", 
-                    emoji: ""
                 }, 
                 {
                     label: "Retirer un Field", 
                     description: "Clique ici pour retirer un field à l'embed", 
                     value: "delfields", 
-                    emoji: ""
                 },
                 {
                     label: "Thumbnail", 
                     description: "Clique ici pour changer le thumbnail de l'embed", 
                     value: "thumbnail", 
-                    emoji: ""
                 }, 
                 {
                     label: "Image", 
                     description: "Clique ici pour changer l'image de l'embed",
                     value: "image", 
-                    emoji: ""
                 }, 
                 {
                     label: "Couleur", 
                     description: "Clique ici pour changer la couleur de l'embed",
                     value: "couleur", 
-                    emoji: ""
                 }, 
                 {
                     label: "Footer",
                     description: "Clique ici pour changer le footer de l'embed", 
                     value: "footer", 
-                    emoji: ""
                 }, 
                 {
                     label: "Auteur", 
                     description: "Clique ici pour changer l'auteur de l'embed", 
                     value: "auteur", 
-                    emoji: ""
                 }, 
                 {
                     label: "URL",
                     description: "Clique ici pour changer l'url du titre de l'embed", 
                     value: "url", 
-                    emoji: ""
                 }, 
                 {
                     label: "Timestamp", 
                     description: "Clique ici pour ajouter un timestamp à l'embed", 
                     value: "timestamp", 
-                    emoji: ""
                 }
             ])
         ); 
@@ -102,11 +91,11 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         .addComponents(
             new Discord.MessageButton()
             .setCustomId("buttonenable")
-            .setEmoji("")
+            .setLabel("Activer")
             .setStyle("SUCCESS"), 
             new Discord.MessageButton()
             .setCustomId("buttondisable")
-            .setEmoji("")
+            .setLabel("Désactiver")
             .setStyle("SECONDARY")
         );
 

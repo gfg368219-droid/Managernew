@@ -75,6 +75,7 @@ class MessageButton extends ButtonBuilder {
 
   setEmoji(emoji) {
     if (typeof emoji === "string") {
+      if (emoji.length === 0) return this;
       const customEmoji = emoji.match(/^<(a?):([^:]+):(\d+)>$/);
       if (customEmoji) {
         return super.setEmoji({
