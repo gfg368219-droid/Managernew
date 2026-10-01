@@ -79,6 +79,34 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             }
         })
 
+        let perm_6 = []
+        client.commands.forEach(async (m) => {
+            if (client.db.get(`perm_${m.name}.${message.guild.id}`) === "6") {
+                perm_6.push(m.name)
+            }
+        })
+
+        let perm_7 = []
+        client.commands.forEach(async (m) => {
+            if (client.db.get(`perm_${m.name}.${message.guild.id}`) === "7") {
+                perm_7.push(m.name)
+            }
+        })
+
+        let perm_8 = []
+        client.commands.forEach(async (m) => {
+            if (client.db.get(`perm_${m.name}.${message.guild.id}`) === "8") {
+                perm_8.push(m.name)
+            }
+        })
+
+        let perm_9 = []
+        client.commands.forEach(async (m) => {
+            if (client.db.get(`perm_${m.name}.${message.guild.id}`) === "9") {
+                perm_9.push(m.name)
+            }
+        })
+
         let perm_public_embed = new Discord.MessageEmbed()
         .setTitle(`Permission publique`)
         .setColor(color)
@@ -114,6 +142,30 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         .setColor(color)
         .setFooter(footer)
         .setDescription(`${perm_5.length > 0 ? perm_5.map(ziak => `\`${prefix}${ziak}\``).join("\n") : "Aucune commande"}`)
+
+        let perm_6_embed = new Discord.MessageEmbed()
+        .setTitle(`Permission 6`)
+        .setColor(color)
+        .setFooter(footer)
+        .setDescription(`${perm_6.length > 0 ? perm_6.map(ziak => `\`${prefix}${ziak}\``).join("\n") : "Aucune commande"}`)
+
+        let perm_7_embed = new Discord.MessageEmbed()
+        .setTitle(`Permission 7`)
+        .setColor(color)
+        .setFooter(footer)
+        .setDescription(`${perm_7.length > 0 ? perm_7.map(ziak => `\`${prefix}${ziak}\``).join("\n") : "Aucune commande"}`)
+
+        let perm_8_embed = new Discord.MessageEmbed()
+        .setTitle(`Permission 8`)
+        .setColor(color)
+        .setFooter(footer)
+        .setDescription(`${perm_8.length > 0 ? perm_8.map(ziak => `\`${prefix}${ziak}\``).join("\n") : "Aucune commande"}`)
+
+        let perm_9_embed = new Discord.MessageEmbed()
+        .setTitle(`Permission 9`)
+        .setColor(color)
+        .setFooter(footer)
+        .setDescription(`${perm_9.length > 0 ? perm_9.map(ziak => `\`${prefix}${ziak}\``).join("\n") : "Aucune commande"}`)
        
 
         let row = new MessageActionRow()
@@ -151,6 +203,26 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                             label: 'Permission 5',
                             description: 'Affiche les commandes associés à la permission 5',
                             value: 'perm_help_5',
+                        },
+                        {
+                            label: 'Permission 6',
+                            description: 'Affiche les commandes associés à la permission 6',
+                            value: 'perm_help_6',
+                        },
+                        {
+                            label: 'Permission 7',
+                            description: 'Affiche les commandes associés à la permission 7',
+                            value: 'perm_help_7',
+                        },
+                        {
+                            label: 'Permission 8',
+                            description: 'Affiche les commandes associés à la permission 8',
+                            value: 'perm_help_8',
+                        },
+                        {
+                            label: 'Permission 9',
+                            description: 'Affiche les commandes associés à la permission 9',
+                            value: 'perm_help_9',
                         },
                     ]),
             );
