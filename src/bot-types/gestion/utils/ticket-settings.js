@@ -201,7 +201,7 @@ function channelSelect(client, guildId, key, placeholder, selected, channelTypes
   return menu;
 }
 
-function buildTicketSettingsMessage(client, guildId, prefix = client.prefix || "!") {
+function buildTicketSettingsMessageLegacy(client, guildId, prefix = client.prefix || "!") {
   const settings = readTicketSettings(client, guildId);
   const keys = settingsKeys(guildId);
   const box = new ContainerBuilder().setAccentColor(0x26262c);
@@ -356,6 +356,140 @@ function buildTicketSettingsMessage(client, guildId, prefix = client.prefix || "
   box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `*Pour afficher la liste des variables, utilisez la commande \`${prefix}variables ticket\`.*`
   ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    settingsButton(`ticket-settings:${guildId}:publish`, "📄", ButtonStyle.Success),
+    settingsButton(`ticket-settings:${guildId}:reset`, "🔄", ButtonStyle.Danger)
+  ));
+
+  return {
+    components: [box],
+    flags: MessageFlags.IsComponentsV2,
+  };
+}
+
+function buildTicketSettingsMessage(client, guildId, prefix = client.prefix || "!") {
+  const settings = readTicketSettings(client, guildId);
+  const box = new ContainerBuilder().setAccentColor(0x26262c);
+  const header = new SectionBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        "## ProalsG3n #BACK — Ticket Settings\nPermet de gérer le système de ticket."
+      )
+    );
+  const avatar = client.user?.displayAvatarURL?.({ extension: "png", size: 128 }) ||
+    "https://cdn.discordapp.com/embed/avatars/0.png";
+  header.setThumbnailAccessory(new ThumbnailBuilder({
+    media: { url: avatar },
+    description: "ProalsG3n",
+  }));
+  box.addSectionComponents(header);
+
+  box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `**Type:** ${settings.type}\n` +
+    `**Bouton réclamer:** ${settings.claim ? "Activé ✅" : "Désactivé ❌"}\n` +
+    `**Transcript Mp:** ${settings.transcript ? "Activé ✅" : "Désactivé ❌"}`
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    settingsButton(`ticket-settings:${guildId}:cycle-type`, "🔄"),
+    settingsButton(`ticket-settings:${guildId}:toggle-claim`, "👥", settings.claim ? ButtonStyle.Success : ButtonStyle.Danger),
+    settingsButton(`ticket-settings:${guildId}:toggle-transcript`, "📨", settings.transcript ? ButtonStyle.Success : ButtonStyle.Danger)
+  ));
+
+  box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `**Rôles requis:** ${roleSummary(client, guildId, settings.requiredRoles) || "Aucun ❌"}\n` +
+    `**Rôles interdits:** ${roleSummary(client, guildId, settings.deniedRoles) || "Aucun ❌"}\n` +
+    `**Rôles mentionnés:** ${roleSummary(client, guildId, settings.mentionRoles) || "Aucun ❌"}\n` +
+    `**Rôles d'accès:** ${roleSummary(client, guildId, settings.accessRoles) || "Aucun ❌"}`
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    roleSelect(client, guildId, "required-roles", "Sélectionnez des rôles requis.", settings.requiredRoles)
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    roleSelect(client, guildId, "denied-roles", "Sélectionnez des rôles qui ne sont pas autorisés.", settings.deniedRoles)
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    roleSelect(client, guildId, "mention-roles", "Sélectionnez des rôles à mentionner.", settings.mentionRoles)
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    roleSelect(client, guildId, "access-roles", "Sélectionnez des rôles d'accès.", settings.accessRoles)
+  ));
+
+  const selectedOption = settings.options.find(option => option.id === settings.selectedOption);
+  const optionMenu = new StringSelectMenuBuilder()
+    .setCustomId(`ticket-settings:${guildId}:select-option`)
+    .setPlaceholder("Sélectionnez une option.")
+    .setMinValues(0)
+    .setMaxValues(1)
+    .setDisabled(settings.type !== "Select" || settings.options.length === 0);
+  if (settings.options.length) {
+    optionMenu.addOptions(settings.options.map(option => {
+      const emoji = safeEmoji(option.emoji);
+      const description = option.description || "";
+      return {
+        label: option.label,
+        value: option.id,
+        default: option.id === settings.selectedOption,
+        ...(description ? { description } : {}),
+        ...(emoji ? { emoji } : {}),
+      };
+    }));
+  } else {
+    optionMenu.addOptions({
+      label: "Aucune option configurée",
+      value: "no-ticket-options",
+    });
+  }
+  box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `**Options ticket:** ${settings.options.length ? `${settings.options.length} configurée(s)` : "Aucune ❌"}\n` +
+    `**Option sélectionnée:** ${selectedOption?.label || "Aucune"}`
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(optionMenu));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    settingsButton(
+      `ticket-settings:${guildId}:edit-option`,
+      "✏️",
+      ButtonStyle.Primary,
+      settings.type !== "Select" || !selectedOption
+    ),
+    settingsButton(`ticket-settings:${guildId}:add-option`, "➕", ButtonStyle.Success, settings.options.length >= 25),
+    settingsButton(
+      `ticket-settings:${guildId}:delete-option`,
+      "🗑️",
+      ButtonStyle.Secondary,
+      settings.type !== "Select" || !selectedOption
+    )
+  ));
+
+  box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `**Salon de logs:** ${settings.logChannel ? channelSummary(client, guildId, settings.logChannel) || "Aucun ❌" : "Aucun ❌"}\n` +
+    `**Catégorie:** ${settings.category ? channelSummary(client, guildId, settings.category) || "Aucun ❌" : "Aucun ❌"}`
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    channelSelect(client, guildId, "log-channel", "Salon de logs", settings.logChannel, [
+      ChannelType.GuildText,
+      ChannelType.GuildAnnouncement,
+    ])
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    channelSelect(client, guildId, "category", "Sélectionnez une catégorie.", settings.category, [
+      ChannelType.GuildCategory,
+    ])
+  ));
+
+  box.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `**Émoji:** ${settings.emoji || "Aucun ❌"}\n` +
+    `**Texte:** ${settings.text}\n` +
+    `**Nom du salon:** \`${settings.channelName}\`\n` +
+    `**Texte d'ouverture:** > ${settings.openingMessage.slice(0, 220).replace(/\n/g, "\n> ")}\n` +
+    `*Variables : \`${prefix}variables ticket\`*`
+  ));
+  box.addActionRowComponents(new ActionRowBuilder().addComponents(
+    settingsButton(`ticket-settings:${guildId}:edit-emoji`, "😀"),
+    settingsButton(`ticket-settings:${guildId}:edit-text`, "📋"),
+    settingsButton(`ticket-settings:${guildId}:edit-channel-name`, "🪶"),
+    settingsButton(`ticket-settings:${guildId}:edit-opening-message`, "✏️")
+  ));
+
   box.addActionRowComponents(new ActionRowBuilder().addComponents(
     settingsButton(`ticket-settings:${guildId}:publish`, "📄", ButtonStyle.Success),
     settingsButton(`ticket-settings:${guildId}:reset`, "🔄", ButtonStyle.Danger)
