@@ -5,7 +5,7 @@ module.exports = {
     name: "perm",
     aliases: [],
     description: "Permet de configurer les permissions du bot",
-    category: "botcontrol",
+    category: "moderation",
     usage: ["perm <permission> add <role>", "perm <permission> remove <role>"],
 
     /**
