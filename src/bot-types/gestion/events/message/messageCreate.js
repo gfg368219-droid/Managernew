@@ -1,6 +1,7 @@
 const { Bot } = require('../../structures/client')
 const Discord = require('discord.js')
 const fs = require('fs')
+const { getCommandClientWithPermissionCompatibility } = require('../../utils/command-permissions')
 module.exports = {
     name: 'messageCreate',
 
@@ -40,7 +41,8 @@ module.exports = {
             const cmd = client.commands.get(commandName) || client.aliases.get(commandName)
             args.shift()
             if (!cmd) return
-            await cmd.run(client, message, args, color, prefix, footer, cmd.name)
+            const commandClient = getCommandClientWithPermissionCompatibility(client, message, cmd.name)
+            await cmd.run(commandClient, message, args, color, prefix, footer, cmd.name)
         } catch (err) {
             console.error(
                 `[gestion] erreur dans la commande "${commandName}" (serveur ${message?.guildId || "inconnu"}) :`,

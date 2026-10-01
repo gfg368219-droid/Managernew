@@ -49,7 +49,6 @@ function settingsKeys(guildId) {
     description: `ticket_description_${guildId}`,
     reaction: `ticket_react_${guildId}`,
     legacyPanel: `ticket_${guildId}`,
-    legacyAccessRoles: `perm_ticket.${guildId}`,
   };
 }
 
@@ -82,9 +81,7 @@ function readTicketSettings(client, guildId) {
     requiredRoles: stringArray(client.db.get(keys.requiredRoles)),
     deniedRoles: stringArray(client.db.get(keys.deniedRoles)),
     mentionRoles: stringArray(client.db.get(keys.mentionRoles)),
-    accessRoles: stringArray(accessRoles === undefined
-      ? client.db.get(keys.legacyAccessRoles)
-      : accessRoles),
+    accessRoles: stringArray(accessRoles),
     logChannel: client.db.get(keys.logChannel) || null,
     category: client.db.get(keys.category) || null,
     emoji: typeof client.db.get(keys.emoji) === "string" ? client.db.get(keys.emoji) : "",
@@ -613,14 +610,15 @@ function canManageTicketSettings(client, interaction) {
 
   const permission = client.db.get(`perm_ticket.${guildId}`);
   if (permission === "public") return true;
-  if (!["1", "2", "3", "4", "5"].includes(permission)) return false;
+  const permissionLevel = String(permission ?? "");
+  if (!/^[1-9]$/.test(permissionLevel)) return false;
 
   const roleIds = interaction.member?.roles?.cache
     ? [...interaction.member.roles.cache.keys()]
     : Array.isArray(interaction.member?.roles)
       ? interaction.member.roles
       : [];
-  const allowedRoleIds = client.db.get(`perm${permission}.${guildId}`) || [];
+  const allowedRoleIds = client.db.get(`perm${permissionLevel}.${guildId}`) || [];
   return roleIds.some(roleId => allowedRoleIds.includes(roleId));
 }
 
