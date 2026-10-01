@@ -39,20 +39,13 @@ module.exports = {
             commandName = args[0].toLowerCase().normalize()
             const cmd = client.commands.get(commandName) || client.aliases.get(commandName)
             args.shift()
-            if (!cmd) {
-                return message.reply(
-                    `Commande inconnue. Utilisez \`${prefix}help\` pour afficher les commandes disponibles.`
-                )
-            }
+            if (!cmd) return
             await cmd.run(client, message, args, color, prefix, footer, cmd.name)
         } catch (err) {
             console.error(
                 `[gestion] erreur dans la commande "${commandName}" (serveur ${message?.guildId || "inconnu"}) :`,
                 err
             )
-            if (message?.channel) {
-                await message.channel.send("Une erreur est survenue lors de l'exécution de cette commande.").catch(() => {})
-            }
         }
     }
 }
