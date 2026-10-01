@@ -210,13 +210,12 @@ function buildTicketSettingsMessage(client, guildId, prefix = client.prefix || "
       new TextDisplayBuilder().setContent("## ProalsG3n #BACK\n— Ticket Settings"),
       new TextDisplayBuilder().setContent("Permet de gérer le système de ticket.")
     );
-  const avatar = client.user?.displayAvatarURL?.({ extension: "png", size: 128 });
-  if (avatar) {
-    header.setThumbnailAccessory(new ThumbnailBuilder({
-      media: { url: avatar },
-      description: "ProalsG3n",
-    }));
-  }
+  const avatar = client.user?.displayAvatarURL?.({ extension: "png", size: 128 }) ||
+    "https://cdn.discordapp.com/embed/avatars/0.png";
+  header.setThumbnailAccessory(new ThumbnailBuilder({
+    media: { url: avatar },
+    description: "ProalsG3n",
+  }));
   box.addSectionComponents(header);
   addSeparator(box);
 
@@ -271,6 +270,12 @@ function buildTicketSettingsMessage(client, guildId, prefix = client.prefix || "
         ...(emoji ? { emoji } : {}),
       };
     }));
+  } else {
+    // Discord requires at least one option even when this select is disabled.
+    optionMenu.addOptions({
+      label: "Aucune option configurée",
+      value: "no-ticket-options",
+    });
   }
   box.addActionRowComponents(new ActionRowBuilder().addComponents(optionMenu));
   box.addActionRowComponents(new ActionRowBuilder().addComponents(
@@ -370,13 +375,12 @@ function buildTicketPublishMessage(client, guildId) {
       new TextDisplayBuilder().setContent(`## ${settings.title}`),
       new TextDisplayBuilder().setContent(settings.description)
     );
-  const avatar = client.user?.displayAvatarURL?.({ extension: "png", size: 128 });
-  if (avatar) {
-    header.setThumbnailAccessory(new ThumbnailBuilder({
-      media: { url: avatar },
-      description: "Ticket",
-    }));
-  }
+  const avatar = client.user?.displayAvatarURL?.({ extension: "png", size: 128 }) ||
+    "https://cdn.discordapp.com/embed/avatars/0.png";
+  header.setThumbnailAccessory(new ThumbnailBuilder({
+    media: { url: avatar },
+    description: "Ticket",
+  }));
   box.addSectionComponents(header);
   addSeparator(box);
 
