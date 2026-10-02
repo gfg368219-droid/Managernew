@@ -37,9 +37,7 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         const permissionKey = `msglogs_${message.guild.id}`;
         if (action === "on") {
             const channel = resolveLogChannel(message, args[1]);
-            if (!isLogChannel(channel)) {
-                return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
-            }
+            if (!isLogChannel(channel)) return;
             client.db.set(permissionKey, channel.id);
             return message.reply(`Les logs de messages seront désormais envoyés dans ${channel}.`);
         }
@@ -52,12 +50,8 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         if (action === "ignore") {
             const ignoreAction = String(args[1] || "").toLowerCase();
             const channel = resolveLogChannel(message, args[2]);
-            if (!["on", "off"].includes(ignoreAction)) {
-                return message.reply(`Utilisation : \`${prefix}msglogs ignore on [salon]\` ou \`${prefix}msglogs ignore off [salon]\``);
-            }
-            if (!isLogChannel(channel)) {
-                return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
-            }
+            if (!["on", "off"].includes(ignoreAction)) return;
+            if (!isLogChannel(channel)) return;
 
             const ignoreKey = `msglogs_ignore_${channel.id}`;
             if (ignoreAction === "on") {
@@ -65,15 +59,13 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
                 return message.reply(`Les logs de messages dans ${channel} seront désormais ignorés.`);
             }
             if (!client.db.get(ignoreKey)) {
-                return message.reply(`Les logs de messages dans ${channel} ne sont pas ignorés.`);
+                return;
             }
             client.db.delete(ignoreKey);
             return message.reply(`Les logs de messages dans ${channel} ne seront plus ignorés.`);
         }
 
-        return message.reply(
-            `Utilisation : \`${prefix}msglogs on [salon]\`, \`${prefix}msglogs off\`, \`${prefix}msglogs ignore on [salon]\` ou \`${prefix}msglogs ignore off [salon]\``
-        );
+        return;
 
     }
 }

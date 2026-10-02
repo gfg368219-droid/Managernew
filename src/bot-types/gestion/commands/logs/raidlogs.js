@@ -41,12 +41,12 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
             return message.reply(`Les logs de raid sont désormais désactivés.`);
         }
         if (action !== "on") {
-            return message.reply(`Utilisation : \`${prefix}raidlogs on [salon]\` ou \`${prefix}raidlogs off\``);
+            return;
         }
 
         const channel = resolveLogChannel(message, args[1]);
         if (!isLogChannel(channel)) {
-            return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
+            return;
         }
 
         client.db.set(permissionKey, channel.id);

@@ -1,5 +1,5 @@
 const { Bot } = require('../../structures/client')
-const Discord = require('discord.js')
+const { queueMessageLog } = require('../../utils/message-log-queue')
 module.exports = {
     name: 'messageUpdate',
 
@@ -26,22 +26,18 @@ module.exports = {
         if (!logChannel?.isTextBased() || typeof logChannel.send !== "function") return;
         if (client.db.get(`msglogs_ignore_${currentMessage.channel.id}`) === true) return;
 
-        const truncate = value => (String(value || "").trim() || "(aucun texte)").slice(0, 1024);
-        const embed = new Discord.EmbedBuilder()
-            .setColor(client.db.get(`color_${guild.id}`) || client.color)
-            .setAuthor({
-                name: currentMessage.author.tag || currentMessage.author.username,
-                iconURL: currentMessage.author.displayAvatarURL(),
-            })
-            .setDescription(`Message modifié dans ${currentMessage.channel}`)
-            .addFields(
-                { name: "Ancien message", value: truncate(previousMessage.content) },
-                { name: "Nouveau message", value: truncate(currentMessage.content) }
-            )
-            .setTimestamp();
-
-        await logChannel.send({ embeds: [embed] }).catch(error => {
-            console.error(`[gestion] envoi du journal de modification impossible (${guild.id}) :`, error.message);
-        });
+        const preview = value => (String(value || "").trim() || "(aucun texte)").slice(0, 300);
+        const author = currentMessage.author.tag || currentMessage.author.username;
+        const description =
+            `Message modifié par ${author} dans ${currentMessage.channel}.\n` +
+            `Avant : ${preview(previousMessage.content)}\n` +
+            `Après : ${preview(currentMessage.content)}`;
+        queueMessageLog(
+            client,
+            guild.id,
+            logChannel,
+            client.db.get(`color_${guild.id}`) || client.color,
+            description
+        );
     }
 }

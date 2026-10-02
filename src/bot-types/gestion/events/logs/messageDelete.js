@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+const { queueMessageLog } = require('../../utils/message-log-queue')
 module.exports = {
     name: 'messageDelete',
 
@@ -34,19 +35,16 @@ module.exports = {
 
         const executor = action?.executor;
         const content = message.content?.trim() || "(message sans texte)";
+        const author = message.author.tag || message.author.username;
         const description = executor
-            ? `Message supprimé par ${executor} dans ${message.channel}.\n\n${content}`
-            : `Message supprimé dans ${message.channel}.\n\n${content}`;
-        const embed = new Discord.EmbedBuilder()
-            .setColor(client.db.get(`color_${guild.id}`) || client.color)
-            .setAuthor({
-                name: message.author.tag || message.author.username,
-                iconURL: message.author.displayAvatarURL(),
-            })
-            .setDescription(description.slice(0, 4096))
-            .setTimestamp();
-        await logChannel.send({ embeds: [embed] }).catch(error => {
-            console.error(`[gestion] envoi du journal de suppression impossible (${guild.id}) :`, error.message);
-        });
+            ? `Message supprimé par ${executor} dans ${message.channel} (auteur : ${author}).\n${content}`
+            : `Message supprimé dans ${message.channel} (auteur : ${author}).\n${content}`;
+        queueMessageLog(
+            client,
+            guild.id,
+            logChannel,
+            client.db.get(`color_${guild.id}`) || client.color,
+            description
+        );
     }
 }
