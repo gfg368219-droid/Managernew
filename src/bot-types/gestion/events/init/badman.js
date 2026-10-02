@@ -4,6 +4,7 @@ const fs = require('fs')
 const Discord = require('discord.js')
 const request = require('request')
 const ms = require("enhanced-ms")
+const { updateServerCountActivity } = require('../../utils/server-count-activity')
 
 module.exports = {
     name: 'ready',
@@ -36,7 +37,7 @@ module.exports = {
         }
 
         if (!client.db.get(`isActivityOn`) || client.db.get(`isActivityOn`) === null || client.db.get(`isActivityOn`) === undefined) {
-            client.user.setActivity(`SupremeBots ${client.version}`, { type: "STREAMING", url: "https://www.twitch.tv/nxthael_04" })
+            updateServerCountActivity(client)
         }
 
     }

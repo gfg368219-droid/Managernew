@@ -81,7 +81,7 @@ function createBotModal() {
         shortModalInput("token", "Token du bot", "Collez le token Discord ici")
       ),
       new (require("discord.js").ActionRowBuilder)().addComponents(
-        shortModalInput("license", "Clé de licence", "SOUL-...")
+        shortModalInput("license", "Clé de licence", "MOZ-...")
       )
     );
 }
@@ -380,7 +380,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       if (kind === "bot" && action === "renew") {
         return interaction.showModal(
           simpleModal(`modal:renew:${bot.id}`, "Renouveler le bot", [
-            { id: "license", label: "Clé de licence", placeholder: "SOUL-..." },
+            { id: "license", label: "Clé de licence", placeholder: "MOZ-..." },
           ])
         );
       }

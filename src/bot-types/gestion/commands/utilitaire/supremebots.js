@@ -3,10 +3,9 @@ const {bot} = require('../../structures/client');
 
 module.exports = {
     name: "support",
-    aliases: ["supremebots"],
     description: "Permet d'obtenier le lien du serveur support ",
     category: "utilitaire" ,
-    usage: ["support", "supremebots"],
+    usage: ["support"],
 
     /**
      * @param {bot} client 

@@ -13,7 +13,7 @@ class bot extends Client {
         this.db = db
         this.color = "#1519f0"
         this.footer = ""
-        this.link = "https://discord.gg/Rq6mnAtuMc"
+        this.link = "9zhMjC2NPW"
         this.prefix = db.get(`mainprefix`) || "&"
         this.dev = "BNT Feujjj"
         this.staff = []

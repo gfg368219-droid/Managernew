@@ -67,7 +67,7 @@ function decrypt(payload) {
 function createLicense({ ownerId, maxUses, durationMs, type = "gestion" }) {
   const license = {
     id: crypto.randomUUID(),
-    code: randomKey("SOUL"),
+    code: randomKey("MOZ"),
     ownerId,
     maxUses,
     used: 0,

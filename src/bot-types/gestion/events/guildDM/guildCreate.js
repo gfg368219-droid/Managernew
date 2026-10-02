@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const { updateServerCountActivity } = require('../../utils/server-count-activity');
 
 async function notifyBuyers(client, message) {
     const owners = client.db.get(`${client.user.id}.owner`) || [];
@@ -21,7 +22,7 @@ module.exports = {
      * @param {Bot} client 
      */
     run: async (client, guild) => {
-       
+        updateServerCountActivity(client);
 
         const owner = guild.members.cache.get(guild.ownerId)?.user;
         let inviter = null;

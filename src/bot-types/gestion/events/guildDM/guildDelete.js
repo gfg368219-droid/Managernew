@@ -1,3 +1,5 @@
+const { updateServerCountActivity } = require('../../utils/server-count-activity');
+
 async function notifyBuyers(client, message) {
     const owners = client.db.get(`${client.user.id}.owner`) || [];
     const recipients = [...new Set([...(client.config.buyers || []), ...owners])];
@@ -19,7 +21,7 @@ module.exports = {
      * @param {Bot} client 
      */
     run: async (client, guild) => {
-       
+        updateServerCountActivity(client);
 
         const owner = guild.members.cache.get(guild.ownerId)?.user;
         const message = `J'ai quitté le serveur \`${guild.name}\` (\`${guild.memberCount}\` membres, propriétaire : \`${owner?.tag || `<@${guild.ownerId}>`}\`).`;
