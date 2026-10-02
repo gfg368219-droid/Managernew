@@ -108,14 +108,14 @@ module.exports = {
         await executorMember.ban({ reason: "antiupdate" });
     }
 
-    let logsEmbed = new Discord.MessageEmbed()
-    .setColor(client.db.get(`color.${guild.id}`) || client.color)
+    let logsEmbed = new Discord.EmbedBuilder()
+    .setColor(client.db.get(`color_${guild.id}`) || client.color)
     .setTitle(`Antiraid : Antiupdate (${guild.name})`)
     .setDescription(`${executor} a tenté de modifier le serveur 
 Il a été sanctionné d'un \`${sanction || "derank"}\``)
     .setTimestamp()
-    .setFooter(client.footer)
-    .setAuthor(`${executor.tag} (${executor.id})`, executor.displayAvatarURL())
+    .setFooter({ text: client.footer })
+    .setAuthor({ name: `${executor.tag} (${executor.id})`, iconURL: executor.displayAvatarURL() })
 
 
     let pingraid = client.db.get(`pingraid_${guild.id}`)

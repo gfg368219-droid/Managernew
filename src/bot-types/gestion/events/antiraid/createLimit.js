@@ -33,13 +33,13 @@ module.exports = {
 
         if (diffbetween <= 0) {
             member.kick()
-            let logsEmbed = new Discord.MessageEmbed()
-            .setColor(client.db.get(`color.${guild.id}`) || client.color)
+            let logsEmbed = new Discord.EmbedBuilder()
+            .setColor(client.db.get(`color_${guild.id}`) || client.color)
             .setTitle(`Antiraid : Creation limit (${guild.name})`)
             .setDescription(`${member.user.tag} a rejoint mais il a été kick car son compte a été créé trop récemment`)
             .setTimestamp()
-            .setFooter(client.footer)
-            .setAuthor(`${member.user.tag} (${member.user.id})`, member.user.displayAvatarURL())
+            .setFooter({ text: client.footer })
+            .setAuthor({ name: `${member.user.tag} (${member.user.id})`, iconURL: member.user.displayAvatarURL() })
             let pingraid = client.db.get(`pingraid_${guild.id}`)
             let pingraid_role = client.db.get(`pingraid_role_${guild.id}`)
             if (!pingraid) pingraid = "Aucune mention"

@@ -56,14 +56,14 @@ module.exports = {
                     guild.members.cache.get(executor.id).ban({ reason: "lockurl" })
                 }
             
-                let logsEmbed = new Discord.MessageEmbed()
-                .setColor(client.db.get(`color.${guild.id}`) || client.color)
+                let logsEmbed = new Discord.EmbedBuilder()
+                .setColor(client.db.get(`color_${guild.id}`) || client.color)
                 .setTitle(`Antiraid : Lockurl (${guild.name})`)
                 .setDescription(`${executor} a tenté de changer l'url du serveur en : \`discord.gg/${newGuild.vanityURLCode}\`
             Il a été sanctionné d'un \`${sanction || "derank"}\``)
                 .setTimestamp()
-                .setFooter(client.footer)
-                .setAuthor(`${executor.tag} (${executor.id})`, executor.displayAvatarURL())
+                .setFooter({ text: client.footer })
+                .setAuthor({ name: `${executor.tag} (${executor.id})`, iconURL: executor.displayAvatarURL() })
             
             
                 let pingraid = client.db.get(`pingraid_${guild.id}`)
@@ -85,14 +85,14 @@ module.exports = {
                     guild.members.cache.get(executor.id).ban({ reason: "lockurl" })
                 }
             
-                let logsEmbed = new Discord.MessageEmbed()
-                .setColor(client.db.get(`color.${guild.id}`) || client.color)
+                let logsEmbed = new Discord.EmbedBuilder()
+                .setColor(client.db.get(`color_${guild.id}`) || client.color)
                 .setTitle(`Antiraid : Lockurl (${guild.name})`)
                 .setDescription(`${executor} a tenté de changer l'url du serveur en : \`discord.gg/${newGuild.vanityURLCode}\`
             Il a été sanctionné d'un \`${sanction || "derank"}\``)
                 .setTimestamp()
-                .setFooter(client.footer)
-                .setAuthor(`${executor.tag} (${executor.id})`, executor.displayAvatarURL())
+                .setFooter({ text: client.footer })
+                .setAuthor({ name: `${executor.tag} (${executor.id})`, iconURL: executor.displayAvatarURL() })
             
             
                 let pingraid = client.db.get(`pingraid_${guild.id}`)

@@ -71,14 +71,14 @@ module.exports = {
 
 
 
-        let logsEmbed = new Discord.MessageEmbed()
-        .setColor(client.db.get(`color.${guild.id}`) || client.color)
+        let logsEmbed = new Discord.EmbedBuilder()
+        .setColor(client.db.get(`color_${guild.id}`) || client.color)
         .setTitle(`Antiraid : Antichannel (${guild.name})`)
         .setDescription(`${executor} a tenté de supprimer un channel nommé \`${channel.name}\`
 Il a été sanctionné d'un \`${sanction || "derank"}\``)
         .setTimestamp()
-        .setFooter(`${client.user.username}#${client.user.discriminator}`, client.user.displayAvatarURL())
-        .setAuthor(`${executor.tag} (${executor.id})`, executor.displayAvatarURL())
+        .setFooter({ text: `${client.user.username}#${client.user.discriminator}`, iconURL: client.user.displayAvatarURL() })
+        .setAuthor({ name: `${executor.tag} (${executor.id})`, iconURL: executor.displayAvatarURL() })
         let pingraid = client.db.get(`pingraid_${guild.id}`)
         let pingraid_role = client.db.get(`pingraid_role_${guild.id}`)
         if (!pingraid) pingraid = "Aucune mention"

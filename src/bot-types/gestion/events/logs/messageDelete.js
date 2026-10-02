@@ -37,7 +37,7 @@ module.exports = {
         const description = executor
             ? `Message supprimé par ${executor} dans ${message.channel}.\n\n${content}`
             : `Message supprimé dans ${message.channel}.\n\n${content}`;
-        const embed = new Discord.MessageEmbed()
+        const embed = new Discord.EmbedBuilder()
             .setColor(client.db.get(`color_${guild.id}`) || client.color)
             .setAuthor({
                 name: message.author.tag || message.author.username,

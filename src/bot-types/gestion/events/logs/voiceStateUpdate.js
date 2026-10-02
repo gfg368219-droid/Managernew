@@ -1,6 +1,5 @@
 const { Bot } = require('../../structures/client')
 const Discord = require('discord.js')
-const fs = require('fs')
 module.exports = {
     name: 'voiceStateUpdate',
 
@@ -10,43 +9,40 @@ module.exports = {
      */
     run: async (client, oldMember, newMember) => {
 
-        let guild = newMember.guild
+        const guild = newMember.guild || oldMember.guild;
         if (!guild) return;
 
-        let channel = client.db.get(`voicelogs_${guild.id}`)
-        if(!channel) return;
-        let chan = guild.channels.cache.get(channel)
-        if(!chan) return;
-        
-        let color = client.db.get(`color_${guild.id}`) || client.color
+        const logChannelId = client.db.get(`voicelogs_${guild.id}`);
+        const logChannel = guild.channels.cache.get(logChannelId);
+        if (!logChannel?.isTextBased() || typeof logChannel.send !== "function") return;
 
-        let userStat;
+        const oldChannelId = oldMember.channelId || null;
+        const newChannelId = newMember.channelId || null;
+        if (oldChannelId === newChannelId) return;
 
-        let user = newMember.guild.members.cache.get(newMember.id)
-        let newchan = newMember.guild.channels.cache.get(newMember.channelId)
-        let oldchan = oldMember.guild.channels.cache.get(oldMember.channelId)
+        const member = newMember.member || guild.members.cache.get(newMember.id);
+        if (!member?.user) return;
 
-        
-        
-        if(oldMember.channelId === null && newMember.channelId !== null) {
-            userStat = `${user} a rejoint le salon ${newchan}`
+        let description;
+        if (!oldChannelId && newChannelId) {
+            description = `<@${member.id}> a rejoint le salon <#${newChannelId}>.`;
+        } else if (oldChannelId && !newChannelId) {
+            description = `<@${member.id}> a quitté le salon <#${oldChannelId}>.`;
+        } else {
+            description = `<@${member.id}> a quitté le salon <#${oldChannelId}> et a rejoint le salon <#${newChannelId}>.`;
         }
 
-        if(oldMember.channelId !== null && newMember.channelId === null) {
-            userStat = `${user} a quitté le salon ${oldchan}`
-        }
+        const embed = new Discord.EmbedBuilder()
+            .setColor(client.db.get(`color_${guild.id}`) || client.color)
+            .setAuthor({
+                name: member.user.tag || member.user.username,
+                iconURL: member.displayAvatarURL(),
+            })
+            .setDescription(description)
+            .setTimestamp();
 
-        if(oldMember.channelId !== null && newMember.channelId !== null) {
-            userStat = `${user} a quitté le salon ${oldchan} et a rejoint le salon ${newchan}`
-        }
-
-        let Embed = new Discord.MessageEmbed()
-        .setColor(color)
-        .setAuthor(`${user.user.tag}`, user.displayAvatarURL())
-        .setDescription(`${userStat}`)
-        .setTimestamp()
-        chan.send({ embeds: [Embed] })
-        
-
+        await logChannel.send({ embeds: [embed] }).catch(error => {
+            console.error(`[gestion] envoi du journal vocal impossible (${guild.id}) :`, error.message);
+        });
     }
 }

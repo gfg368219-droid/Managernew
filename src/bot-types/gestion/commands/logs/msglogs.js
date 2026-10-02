@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
+const { resolveLogChannel, isLogChannel } = require('../../utils/log-channels');
 
 module.exports = {
     name: "msglogs",
@@ -32,31 +33,47 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
 
-        let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]);
-        if(!channel) channel = message.channel;
-
-        let logs = client.db.get(`msglogs_${message.guild.id}`)
-
-        if (args[0] === "on") {
-            client.db.set(`msglogs_${message.guild.id}`, channel.id)
-            message.reply(`Le logs de messages seront désormais envoyés dans ${channel}`)
+        const action = String(args[0] || "").toLowerCase();
+        const permissionKey = `msglogs_${message.guild.id}`;
+        if (action === "on") {
+            const channel = resolveLogChannel(message, args[1]);
+            if (!isLogChannel(channel)) {
+                return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
+            }
+            client.db.set(permissionKey, channel.id);
+            return message.reply(`Les logs de messages seront désormais envoyés dans ${channel}.`);
         }
 
-        if (args[0] === "off") {
-            client.db.delete(`msglogs_${message.guild.id}`)
-            message.reply(`Les logs de messages sont désormais off`)
+        if (action === "off") {
+            client.db.delete(permissionKey);
+            return message.reply("Les logs de messages sont désormais désactivés.");
         }
 
-        if (args[0] === "ignore" && args[1] === "on") {
-            client.db.set(`msglogs_ignore_${channel.id}`, true)
-            message.reply(`Les logs de messages dans ${channel} seront désormais ignorés`)
+        if (action === "ignore") {
+            const ignoreAction = String(args[1] || "").toLowerCase();
+            const channel = resolveLogChannel(message, args[2]);
+            if (!["on", "off"].includes(ignoreAction)) {
+                return message.reply(`Utilisation : \`${prefix}msglogs ignore on [salon]\` ou \`${prefix}msglogs ignore off [salon]\``);
+            }
+            if (!isLogChannel(channel)) {
+                return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
+            }
+
+            const ignoreKey = `msglogs_ignore_${channel.id}`;
+            if (ignoreAction === "on") {
+                client.db.set(ignoreKey, true);
+                return message.reply(`Les logs de messages dans ${channel} seront désormais ignorés.`);
+            }
+            if (!client.db.get(ignoreKey)) {
+                return message.reply(`Les logs de messages dans ${channel} ne sont pas ignorés.`);
+            }
+            client.db.delete(ignoreKey);
+            return message.reply(`Les logs de messages dans ${channel} ne seront plus ignorés.`);
         }
 
-        if (args[0] === "ignore" && args[1] === "off") {
-            if (!client.db.get(`msglogs_ignore_${channel.id}`)) return message.reply(`Les logs de messages dans ${channel} ne sont pas ignorés`)
-            client.db.delete(`msglogs_ignore_${channel.id}`)
-            message.reply(`Les logs de messages dans ${channel} ne seront plus ignorés`)
-        }
+        return message.reply(
+            `Utilisation : \`${prefix}msglogs on [salon]\`, \`${prefix}msglogs off\`, \`${prefix}msglogs ignore on [salon]\` ou \`${prefix}msglogs ignore off [salon]\``
+        );
 
     }
 }

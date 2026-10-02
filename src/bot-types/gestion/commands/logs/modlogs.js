@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
+const { resolveLogChannel, isLogChannel } = require('../../utils/log-channels');
 
 module.exports = {
     name: "modlogs",
@@ -33,20 +34,23 @@ if(!staff.includes(message.author.id) && !client.config.buyers.includes(message.
 if (pass === false) return message.channel.send(`Vous n'avez pas la permission d'utiliser cette commande.`)
 
 
-        let channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]);
-        if(!channel) channel = message.channel;
-
-        let logs = client.db.get(`modlogs_${message.guild.id}`)
-
-        if (args[0] === "on") {
-        client.db.set(`modlogs_${message.guild.id}`, channel.id)
-        message.reply(`Le logs de modération seront désormais envoyés dans ${channel}`)
+        const action = String(args[0] || "").toLowerCase();
+        const permissionKey = `modlogs_${message.guild.id}`;
+        if (action === "off") {
+            client.db.delete(permissionKey);
+            return message.reply(`Les logs de modération sont désormais désactivés.`);
+        }
+        if (action !== "on") {
+            return message.reply(`Utilisation : \`${prefix}modlogs on [salon]\` ou \`${prefix}modlogs off\``);
         }
 
-        if (args[0] === "off") {
-            client.db.set(`modlogs_${message.guild.id}`, "off")
-            message.reply(`Les logs de modération sont désormais off`)
+        const channel = resolveLogChannel(message, args[1]);
+        if (!isLogChannel(channel)) {
+            return message.reply("Salon invalide. Mentionnez un salon textuel ou indiquez son ID.");
         }
+
+        client.db.set(permissionKey, channel.id);
+        return message.reply(`Les logs de modération seront désormais envoyés dans ${channel}.`);
 
     }
 }

@@ -43,14 +43,14 @@ module.exports = {
             member.ban()
         }
 
-        let logsEmbed = new Discord.MessageEmbed()
-        .setColor(client.db.get(`color.${guild.id}`) || client.color)
+        let logsEmbed = new Discord.EmbedBuilder()
+        .setColor(client.db.get(`color_${guild.id}`) || client.color)
         .setTitle(`Antiraid : Antibot (${guild.name})`)
         .setDescription(`${executor} a tenté d'ajouter un bot sur le serveur nommé \`${member.user.tag}\`
 Il a été sanctionné d'un \`${sanction || "derank"}\``)
         .setTimestamp()
-        .setFooter(client.footer)
-        .setAuthor(`${executor.tag} (${executor.id})`, executor.displayAvatarURL())
+        .setFooter({ text: client.footer })
+        .setAuthor({ name: `${executor.tag} (${executor.id})`, iconURL: executor.displayAvatarURL() })
 
         let pingraid = client.db.get(`pingraid_${guild.id}`)
         let pingraid_role = client.db.get(`pingraid_role_${guild.id}`)
