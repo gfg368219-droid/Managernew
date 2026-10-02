@@ -1,7 +1,8 @@
 const Discord = require('discord.js');
 const {bot} = require('../../structures/client'); 
 const { MessageActionRow, MessageSelectMenu } = require('discord.js');
-const ms = require('enhanced-ms')
+const enhancedMs = require('enhanced-ms')
+const ms = enhancedMs.default || enhancedMs
 module.exports = {
     name: "tempmute",
     aliases: [],
@@ -43,27 +44,37 @@ if (pass === false) return message.channel.send(`Vous n'avez pas la permission d
         let mutelimit = client.db.get(`mutelimit_${message.guild.id}`) || ms("600d")
         if (time > mutelimit) return message.reply(`Vous ne pouvez pas tempmute une personne avec un temps supérieur à **${ms(mutelimit)}**`)
 
-        await user.send(`Vous avez été **tempmute ${args[1].toLowerCase()}** du serveur ${message.guild.name}`).then(async () => {
-            await user.timeout(time).then(async () => {
-                message.reply(`${user.user.username} a été **tempmute ${args[1].toLowerCase()}** pour \`${raison}\``)
-                let sanction = {
-                    type: `tempmute ${args[1].toLowerCase()}`,
-                    _id: Math.floor(Math.random() * 9999),
-                    user: user.user.id,
-                    raison: raison,
-                    date: new Date(),
-                    mod: message.author.id
-                }
-                client.db.push(`sanctions_${message.guild.id}`, sanction)
-            })
-        })
+        await user.timeout(time)
+        let sanction = {
+            type: `tempmute ${args[1].toLowerCase()}`,
+            _id: Math.floor(Math.random() * 9999),
+            user: user.user.id,
+            raison: raison,
+            date: new Date(),
+            mod: message.author.id
+        }
+        client.db.push(`sanctions_${message.guild.id}`, sanction)
 
-        let Embed = new Discord.MessageEmbed()
+        let dmFailed = false
+        try {
+            await user.send(`Vous avez été **tempmute ${args[1].toLowerCase()}** du serveur ${message.guild.name}`)
+        } catch (error) {
+            dmFailed = true
+            if (error.code !== 50007) {
+                console.error(`[gestion] impossible d'envoyer le DM de tempmute à ${user.user.id} :`, error)
+            }
+        }
+
+        await message.reply(
+            `${user.user.username} a été **tempmute ${args[1].toLowerCase()}** pour \`${raison}\`${dmFailed ? "\nJe n'ai pas pu lui envoyer de message privé." : ""}`
+        )
+
+        let Embed = new Discord.EmbedBuilder()
         .setColor(color)
-        .setAuthor(`${message.author.tag}`, message.author.displayAvatarURL())
+        .setAuthor({ name: `${message.author.tag}`, iconURL: message.author.displayAvatarURL() })
         .setDescription(`${message.author} a tempmute ${user} pour ${args[1].toLowerCase()}`)
         .setTimestamp()
-        .setFooter(footer)
+        .setFooter({ text: footer })
         message.guild.channels.cache.get(client.db.get(`modlogs_${message.guild.id}`))?.send({ embeds: [Embed] })
 
         
