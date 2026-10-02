@@ -1,1 +1,2 @@
 - [Legacy updater safety](legacy-updater-safety.md) — keep the imported auto-updater disabled unless replaced with a workspace-aware, recoverable update flow.
+- [Coin runtime isolation](coin-runtime-isolation.md) — keep each Coin database separate and derive admin rights from the current bot owner, not stored license state.

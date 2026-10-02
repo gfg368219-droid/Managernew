@@ -4,6 +4,11 @@ const BOT_TYPES = {
     label: "Gestion",
     description: "Bot de gestion, modération, sécurité et commandes buyer",
   },
+  coin: {
+    id: "coin",
+    label: "Coin",
+    description: "Bot d'économie virtuelle, jeux, métiers et alliances",
+  },
 };
 
 function getBotType(type) {

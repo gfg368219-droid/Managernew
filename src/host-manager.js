@@ -29,36 +29,47 @@ class HostManager {
       return { ok: true, alreadyRunning: true };
     }
 
-    if ((bot.botType || "gestion") === "gestion") {
-      return this.startGestion(bot);
+    const botType = bot.botType || "gestion";
+    if (botType === "gestion" || botType === "coin") {
+      return this.startManagedProcess(bot, botType);
     }
     return this.startLegacy(bot);
   }
 
-  async startGestion(bot) {
+  async startManagedProcess(bot, botType) {
     this.starting.add(bot.id);
     const runtimeDir = path.resolve(config.dataFile, "..", "hosted", bot.id);
-    const templateDir = path.resolve(__dirname, "bot-types", "gestion");
+    const templateDir = path.resolve(__dirname, "bot-types", botType);
+    const typeLabel = botType === "coin" ? "Coin" : "Gestion";
     try {
       fs.mkdirSync(runtimeDir, { recursive: true });
       fs.cpSync(templateDir, runtimeDir, { recursive: true, force: true });
+      if (botType === "coin") {
+        fs.mkdirSync(path.join(runtimeDir, "Utils", "DataBase"), { recursive: true });
+      }
+      const childEnv = {
+        ...process.env,
+        BOT_RUNTIME_TOKEN: store.getBotToken(bot),
+        BOT_OWNER_ID: bot.ownerId,
+        BOT_ID: bot.id,
+        BOT_EXPIRES_AT: String(bot.expiresAt),
+      };
+      if (botType === "coin") {
+        delete childEnv.COIN_API_PORT;
+        const apiPort = this.getCoinApiPort(bot);
+        if (apiPort) childEnv.COIN_API_PORT = String(apiPort);
+      }
       const child = fork(path.join(runtimeDir, "runner.js"), [], {
         cwd: runtimeDir,
         silent: true,
-        env: {
-          ...process.env,
-          BOT_RUNTIME_TOKEN: store.getBotToken(bot),
-          BOT_OWNER_ID: bot.ownerId,
-          BOT_ID: bot.id,
-          BOT_EXPIRES_AT: String(bot.expiresAt),
-        },
+        env: childEnv,
       });
       this.clients.set(bot.id, { kind: "process", process: child, runtimeDir, ready: false });
       child.stdout?.on("data", (chunk) => {
-        console.log(`[gestion:${bot.id}] ${String(chunk).trim()}`);
+        console.log(`[${botType}:${bot.id}] ${String(chunk).trim()}`);
       });
       child.stderr?.on("data", (chunk) => {
-        console.error(`[gestion:${bot.id}] ${String(chunk).trim()}`);
+        console.error(`[${botType}:${bot.id}] ${String(chunk).trim()}`);
       });
       child.on("message", (message) => {
         if (message?.type === "error") {
@@ -76,7 +87,7 @@ class HostManager {
         const hosted = this.clients.get(bot.id);
         if (hosted?.process === child) hosted.ready = true;
         this.starting.delete(bot.id);
-        console.log(`[host] ${message.user.tag} est en ligne comme bot Gestion`);
+        console.log(`[host] ${message.user.tag} est en ligne comme bot ${typeLabel}`);
       });
       child.on("error", (error) => {
         store.updateBot(bot.id, { lastError: error.message });
@@ -98,10 +109,22 @@ class HostManager {
       this.starting.delete(bot.id);
       this.clients.delete(bot.id);
       store.updateBot(bot.id, { lastError: error.message });
-      return { ok: false, error: "Le bot Gestion n'a pas pu être lancé." };
+      return { ok: false, error: `Le bot ${typeLabel} n'a pas pu être lancé.` };
     } finally {
       this.starting.delete(bot.id);
     }
+  }
+
+  getCoinApiPort(bot) {
+    const basePort = Number.parseInt(process.env.COIN_API_PORT_BASE || "", 10);
+    if (!Number.isInteger(basePort) || basePort < 1024 || basePort > 65535) return null;
+
+    const coinBots = store
+      .allBots()
+      .filter((candidate) => candidate.botType === "coin");
+    const index = coinBots.findIndex((candidate) => candidate.id === bot.id);
+    const port = basePort + Math.max(index, 0);
+    return port <= 65535 ? port : null;
   }
 
   async startLegacy(bot) {
