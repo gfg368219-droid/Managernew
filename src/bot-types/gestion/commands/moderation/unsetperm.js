@@ -12,12 +12,12 @@ module.exports = {
 
         const level = String(args[0] || "");
         if (!/^[1-9]$/.test(level)) {
-            return message.reply(`Utilisation : \`${prefix}unsetperm <1-9> <rôle>\``);
+            return;
         }
 
         const role = message.mentions.roles.first() || message.guild.roles.cache.get(args[1]);
         if (!role) {
-            return message.reply("Rôle invalide. Mentionnez un rôle ou indiquez son ID.");
+            return;
         }
 
         const permissionKey = `perm${level}.${message.guild.id}`;
@@ -30,7 +30,7 @@ module.exports = {
         const remainingRoles = roleIds.filter(roleId => String(roleId) !== role.id);
 
         if (remainingRoles.length === roleIds.length) {
-            return message.reply(`${role} n'est pas configuré pour le niveau de permission ${level}.`);
+            return;
         }
 
         client.db.set(permissionKey, remainingRoles);
