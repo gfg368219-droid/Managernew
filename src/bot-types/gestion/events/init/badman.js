@@ -36,9 +36,7 @@ module.exports = {
         client.user.setActivity(client.db.get(`texte.activity`), { type: client.db.get(`type.activity`), url: "https://www.twitch.tv/nxthael_04" })
         }
 
-        if (!client.db.get(`isActivityOn`) || client.db.get(`isActivityOn`) === null || client.db.get(`isActivityOn`) === undefined) {
-            updateServerCountActivity(client)
-        }
+        updateServerCountActivity(client)
 
     }
 }
