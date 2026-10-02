@@ -12,10 +12,12 @@ module.exports = {
 
         const guild = message?.guild;
         if (!guild || !message.author) return;
+        if (message.author.bot) return;
 
         const logChannelId = client.db.get(`msglogs_${guild.id}`);
         const logChannel = guild.channels.cache.get(logChannelId);
         if (!logChannel?.isTextBased()) return;
+        if (message.channel.id === logChannel.id) return;
         if (client.db.get(`msglogs_ignore_${message.channel.id}`) === true) return;
 
         let action = null;
@@ -44,7 +46,8 @@ module.exports = {
             guild.id,
             logChannel,
             client.db.get(`color_${guild.id}`) || client.color,
-            description
+            description,
+            `delete:${message.id}`
         );
     }
 }
