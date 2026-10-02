@@ -2,6 +2,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { dataFile, dataVersion } = require("./config");
+const { getBotType } = require("./bot-types");
+const { formatDate, getBotTypeChangeAvailableAt } = require("./format");
 
 const key = crypto
   .createHash("sha256")
@@ -148,6 +150,32 @@ function updateBot(id, changes) {
   return bot;
 }
 
+function changeBotType(botId, ownerId, nextType) {
+  const bot = getBot(botId);
+  if (!bot || bot.ownerId !== ownerId) {
+    throw new Error("Bot introuvable ou accès refusé.");
+  }
+  const now = Date.now();
+  if (bot.expiresAt <= now) {
+    throw new Error("La licence de ce bot est expirée.");
+  }
+  if (!getBotType(nextType)) {
+    throw new Error("Type de bot inconnu.");
+  }
+  if ((bot.botType || "gestion") === nextType) {
+    throw new Error("Ce bot utilise déjà ce type.");
+  }
+  const availableAt = getBotTypeChangeAvailableAt(bot);
+  if (availableAt > now) {
+    throw new Error(`Vous pourrez changer de type à partir du ${formatDate(availableAt)}.`);
+  }
+
+  bot.botType = nextType;
+  bot.lastTypeChangedAt = now;
+  persist();
+  return bot;
+}
+
 function deleteBot(id) {
   const index = state.bots.findIndex((bot) => bot.id === id);
   if (index === -1) return false;
@@ -176,7 +204,7 @@ function renewBot(botId, ownerId, licenseCode) {
   const license = consumeLicense(licenseCode, ownerId);
   bot.expiresAt = Math.max(Date.now(), bot.expiresAt) + license.durationMs;
   bot.licenseId = license.id;
-  bot.botType = license.type || bot.botType || "gestion";
+  if (!bot.botType) bot.botType = license.type || "gestion";
   persist();
   return bot;
 }
@@ -196,6 +224,7 @@ module.exports = {
   getBotToken,
   updateBotToken,
   updateBot,
+  changeBotType,
   deleteBot,
   claimBot,
   renewBot,

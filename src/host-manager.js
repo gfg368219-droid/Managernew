@@ -115,6 +115,48 @@ class HostManager {
     }
   }
 
+  waitForReady(botId, timeoutMs = 30_000) {
+    const hosted = this.clients.get(botId);
+    if (!hosted || hosted.kind !== "process") {
+      return Promise.resolve({ ok: false, error: "Le processus du bot n'a pas démarré." });
+    }
+    if (hosted.ready) return Promise.resolve({ ok: true });
+
+    const child = hosted.process;
+    return new Promise((resolve) => {
+      let finished = false;
+      const finish = (result) => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeout);
+        child.removeListener("message", onMessage);
+        child.removeListener("exit", onExit);
+        resolve(result);
+      };
+      const onMessage = (message) => {
+        if (message?.type === "ready") finish({ ok: true });
+        if (message?.type === "error") {
+          finish({ ok: false, error: message.message || "Le bot n'a pas pu se connecter." });
+        }
+      };
+      const onExit = (code, signal) => {
+        finish({
+          ok: false,
+          error: `Le bot s'est arrêté avant d'être prêt (${signal || `code ${code}`}).`,
+        });
+      };
+      const timeout = setTimeout(() => {
+        finish({ ok: false, error: "Le bot n'a pas répondu après 30 secondes." });
+      }, timeoutMs);
+
+      child.on("message", onMessage);
+      child.once("exit", onExit);
+      if (child.exitCode !== null || child.signalCode !== null) {
+        onExit(child.exitCode, child.signalCode);
+      }
+    });
+  }
+
   getCoinApiPort(bot) {
     const basePort = Number.parseInt(process.env.COIN_API_PORT_BASE || "", 10);
     if (!Number.isInteger(basePort) || basePort < 1024 || basePort > 65535) return null;
@@ -176,11 +218,27 @@ class HostManager {
     const hosted = this.clients.get(botId);
     if (!hosted) return false;
     if (hosted.kind === "process") {
-      hosted.process.kill("SIGTERM");
+      const child = hosted.process;
+      if (child.exitCode === null && child.signalCode === null) {
+        await new Promise((resolve) => {
+          let finished = false;
+          const timeout = setTimeout(() => child.kill("SIGKILL"), 5000);
+          timeout.unref?.();
+          const finish = () => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeout);
+            resolve();
+          };
+          child.once("exit", finish);
+          child.once("error", finish);
+          if (!child.kill("SIGTERM")) finish();
+        });
+      }
     } else {
       hosted.client.destroy();
     }
-    this.clients.delete(botId);
+    if (this.clients.get(botId) === hosted) this.clients.delete(botId);
     return true;
   }
 

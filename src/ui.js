@@ -9,7 +9,7 @@ const {
   TextDisplayBuilder,
 } = require("discord.js");
 const { managerColor } = require("./config");
-const { formatDate, formatRemaining } = require("./format");
+const { formatDate, formatRemaining, getBotTypeChangeAvailableAt } = require("./format");
 
 function text(content) {
   return new TextDisplayBuilder().setContent(content);
@@ -75,7 +75,7 @@ function buildBotsPage(bots, page, pageSize, hostManager, getType) {
   let body = `Page ${safePage + 1}/${totalPages} · ${bots.length} bot(s)\n\n`;
 
   if (!visible.length) {
-    body += "Vous n'avez encore aucun bot hébergé.\nUtilisez /createbot pour commencer.";
+    body += "Vous n'avez encore aucun bot.\nUtilisez /createbot pour commencer.";
   } else {
     body += visible
       .map((bot, index) => {
@@ -128,6 +128,8 @@ function buildBotsPage(bots, page, pageSize, hostManager, getType) {
 function buildBotPanel(bot, status, getType) {
   const invite = botInvite(bot);
   const type = getType(bot.botType)?.label || bot.botType || "Gestion";
+  const typeChangeAvailableAt = getBotTypeChangeAvailableAt(bot);
+  const typeChangeCoolingDown = typeChangeAvailableAt > Date.now();
   const rows = [
     new ActionRowBuilder().addComponents(
       button(`bot:start:${bot.id}`, "Démarrer", ButtonStyle.Success).setDisabled(status === "online" || status === "expired"),
@@ -142,6 +144,10 @@ function buildBotPanel(bot, status, getType) {
       button(`bot:renew:${bot.id}`, "Renouveler"),
       button(`recovery:view:${bot.id}`, "Voir la clé de récupération"),
       button(`recovery:regen:${bot.id}`, "Régénérer la clé", ButtonStyle.Danger)
+    ),
+    new ActionRowBuilder().addComponents(
+      button(`bot:type-change:${bot.id}`, "Changer de type", ButtonStyle.Secondary)
+        .setDisabled(status === "expired" || typeChangeCoolingDown)
     ),
   ];
   if (invite) {
@@ -158,10 +164,61 @@ function buildBotPanel(bot, status, getType) {
       `Type : ${type}\n` +
       `Statut : ${statusLabel(status)}\n` +
       "Rôle : Propriétaire\n" +
+      `Changement de type : ${typeChangeCoolingDown ? `disponible le ${formatDate(typeChangeAvailableAt)}` : "disponible"}\n` +
       `Licence : ${formatRemaining(bot.expiresAt)}\n` +
       `Expire le : ${formatDate(bot.expiresAt)}`,
     rows,
     status === "expired" ? 0x64748b : managerColor
+  );
+}
+
+function buildBotTypePicker(bot, types, getType) {
+  const currentType = bot.botType || "gestion";
+  const otherTypes = types.filter((type) => type.id !== currentType);
+  const rows = [];
+  if (otherTypes.length) {
+    rows.push(
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId(`bot:type-select:${bot.id}`)
+          .setPlaceholder("Choisir le nouveau type")
+          .addOptions(otherTypes.map((type) => ({
+            label: type.label,
+            description: type.description.slice(0, 100),
+            value: type.id,
+          })))
+      )
+    );
+  }
+  rows.push(
+    new ActionRowBuilder().addComponents(
+      button(`bot:manage:${bot.id}`, "Annuler")
+    )
+  );
+  return container(
+    "Changer le type du bot",
+    `Type actuel : ${getType(currentType)?.label || currentType}.\n` +
+      "Le bot redémarrera avec les commandes du nouveau type. Les données propres à chaque type sont conservées séparément.\n" +
+      "Après confirmation, un délai de 7 jours commencera avant le prochain changement.",
+    rows,
+    0xf59e0b
+  );
+}
+
+function buildBotTypeConfirm(bot, nextType, getType) {
+  const currentLabel = getType(bot.botType)?.label || bot.botType || "Gestion";
+  const nextLabel = getType(nextType)?.label || nextType;
+  return container(
+    "Confirmer le changement",
+    `Passer ${bot.displayName} de ${currentLabel} à ${nextLabel} ?\n` +
+      "Le processus va redémarrer et le délai de 7 jours commencera. Les données des deux types ne seront pas transférées.",
+    [
+      new ActionRowBuilder().addComponents(
+        button(`bot:type-confirm:${bot.id}:${nextType}`, "Confirmer", ButtonStyle.Danger),
+        button(`bot:manage:${bot.id}`, "Annuler")
+      ),
+    ],
+    0xf59e0b
   );
 }
 
@@ -185,6 +242,8 @@ module.exports = {
   buildLicenseTypePicker,
   buildBotsPage,
   buildBotPanel,
+  buildBotTypePicker,
+  buildBotTypeConfirm,
   buildPrivateKey,
   statusLabel,
 };

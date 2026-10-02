@@ -16,7 +16,7 @@ const config = require("./config");
 const store = require("./store");
 const HostManager = require("./host-manager");
 const ui = require("./ui");
-const { parseDuration, parseUses } = require("./format");
+const { parseDuration, parseUses, formatDate, getBotTypeChangeAvailableAt } = require("./format");
 const { getBotType, listBotTypes } = require("./bot-types");
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -329,7 +329,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     if (interaction.isButton()) {
-      const [kind, action, value] = interaction.customId.split(":");
+      const [kind, action, value, extra] = interaction.customId.split(":");
       if (kind === "bots" && action === "page") {
         return interaction.update(
           ui.buildBotsPage(store.listBotsForUser(interaction.user.id), Number(value), 3, hostManager, getBotType)
@@ -340,6 +340,72 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const bot = store.getBot(value);
       if (!bot || bot.ownerId !== interaction.user.id) {
         return replyError(interaction, "Bot introuvable ou accès refusé.");
+      }
+      if (kind === "bot" && action === "type-change") {
+        if (bot.expiresAt <= Date.now()) {
+          return replyError(interaction, "La licence de ce bot est expirée.");
+        }
+        const availableAt = getBotTypeChangeAvailableAt(bot);
+        if (availableAt > Date.now()) {
+          return replyError(interaction, `Vous pourrez changer de type à partir du ${formatDate(availableAt)}.`);
+        }
+        return interaction.reply({
+          ...ui.buildBotTypePicker(bot, listBotTypes(), getBotType),
+          flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        });
+      }
+      if (kind === "bot" && action === "type-confirm") {
+        const previousType = bot.botType || "gestion";
+        const previousTypeChangedAt = bot.lastTypeChangedAt;
+        const wasRunning = hostManager.status(bot) !== "offline";
+        await interaction.deferUpdate();
+        const updatedBot = store.changeBotType(bot.id, interaction.user.id, extra);
+        let result = await hostManager.restart(updatedBot);
+        if (result.ok) result = await hostManager.waitForReady(bot.id);
+        if (!result.ok) {
+          await hostManager.stop(bot.id);
+          const restoredBot = store.updateBot(bot.id, {
+            botType: previousType,
+            lastTypeChangedAt: previousTypeChangedAt,
+          });
+          let restoreStatus = "Le bot était hors ligne et reste arrêté.";
+          if (wasRunning) {
+            const restoreStart = await hostManager.start(restoredBot);
+            const restoredReady = restoreStart.ok
+              ? await hostManager.waitForReady(bot.id)
+              : restoreStart;
+            restoreStatus = restoredReady.ok
+              ? `Le type ${getBotType(previousType)?.label || previousType} a été remis en marche.`
+              : `Le type d'origine a été restauré, mais son redémarrage a échoué : ${restoredReady.error}`;
+          }
+          return interaction.editReply({
+            ...ui.container(
+              "Changement annulé",
+              `Le nouveau type n'a pas démarré : ${result.error}\n${restoreStatus} Aucun délai de 7 jours n'a été appliqué.`,
+              [
+                new (require("discord.js").ActionRowBuilder)().addComponents(
+                  ui.button(`bot:manage:${bot.id}`, "Retour à la gestion")
+                ),
+              ],
+              0xef4444
+            ),
+          });
+        }
+        const nextChangeAt = getBotTypeChangeAvailableAt(updatedBot);
+        const nextTypeLabel = getBotType(updatedBot.botType).label;
+        return interaction.editReply({
+          ...ui.container(
+            "Type modifié",
+            `${updatedBot.displayName} utilise maintenant le type ${nextTypeLabel} et le bot est en ligne.\n` +
+              `Prochain changement possible le ${formatDate(nextChangeAt)}.`,
+            [
+              new (require("discord.js").ActionRowBuilder)().addComponents(
+                ui.button(`bot:manage:${bot.id}`, "Retour à la gestion")
+              ),
+            ],
+            0x22c55e
+          ),
+        });
       }
       if (kind === "recovery" && action === "view") {
         return interaction.reply({
@@ -397,6 +463,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const type = interaction.values[0];
       if (!getBotType(type)) return replyError(interaction, "Type de bot inconnu.");
       return interaction.showModal(createKeyModal(type));
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith("bot:type-select:")) {
+      const botId = interaction.customId.split(":")[2];
+      const bot = store.getBot(botId);
+      if (!bot || bot.ownerId !== interaction.user.id) {
+        return replyError(interaction, "Bot introuvable ou accès refusé.");
+      }
+      if (bot.expiresAt <= Date.now()) {
+        return replyError(interaction, "La licence de ce bot est expirée.");
+      }
+      const nextType = interaction.values[0];
+      if (!getBotType(nextType) || nextType === (bot.botType || "gestion")) {
+        return replyError(interaction, "Choisissez un type différent et valide.");
+      }
+      const availableAt = getBotTypeChangeAvailableAt(bot);
+      if (availableAt > Date.now()) {
+        return replyError(interaction, `Vous pourrez changer de type à partir du ${formatDate(availableAt)}.`);
+      }
+      return interaction.update(ui.buildBotTypeConfirm(bot, nextType, getBotType));
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith("bots:select:")) {

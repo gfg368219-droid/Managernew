@@ -1,3 +1,5 @@
+const BOT_TYPE_CHANGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
 function parseDuration(input) {
   const match = String(input || "")
     .trim()
@@ -61,10 +63,19 @@ function formatDate(timestamp) {
   }).format(new Date(timestamp));
 }
 
+function getBotTypeChangeAvailableAt(bot) {
+  const lastChangedAt = Number(bot?.lastTypeChangedAt || 0);
+  return Number.isFinite(lastChangedAt) && lastChangedAt > 0
+    ? lastChangedAt + BOT_TYPE_CHANGE_COOLDOWN_MS
+    : 0;
+}
+
 module.exports = {
+  BOT_TYPE_CHANGE_COOLDOWN_MS,
   parseDuration,
   parseUses,
   formatDuration,
   formatRemaining,
   formatDate,
+  getBotTypeChangeAvailableAt,
 };
