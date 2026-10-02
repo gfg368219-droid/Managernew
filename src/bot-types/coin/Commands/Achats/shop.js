@@ -25,18 +25,9 @@ exports.run = async (bot, message, args, config, data) => {
         return `**${name.charAt(0).toUpperCase() + name.slice(1)}** \n Prix : ${price} rep :small_red_triangle:\n ┖ ${job.description}`;
       }).join('\n\n')
       //EMBED
-      const colors = config.color;
+      const colors = Array.isArray(config.color) ? config.color : [];
       let ListColor = "Aucune couleur"
       if (colors && colors.length) {
-  
-  
-        const colorDictionary = {};
-        const priceDictionary = {};
-        colors.forEach(color => {
-          const colorName = color.name.toLowerCase();
-          colorDictionary[colorName] = color;
-          priceDictionary[colorName] = color.price;
-        });
         ListColor = colors.map(color => {
           return `\`${color.name.charAt(0).toUpperCase() + color.name.slice(1)}\` \n Prix : ${color.price} rep :small_red_triangle:`;
         }).join("\n")
